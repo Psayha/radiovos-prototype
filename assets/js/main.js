@@ -123,6 +123,11 @@
   }
 
   /* ---------- Передачи ---------- */
+  var TR = { а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"e",ж:"zh",з:"z",и:"i",й:"y",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"h",ц:"c",ч:"ch",ш:"sh",щ:"sch",ъ:"",ы:"y",ь:"",э:"e",ю:"yu",я:"ya" };
+  function slug(name) {
+    return name.toLowerCase().split("").map(function (c) { return c in TR ? TR[c] : c; }).join("")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
   function airTimes(name) {
     return schedule.filter(function (it) { return it.show === name; }).map(function (it) { return it.time; });
   }
@@ -136,8 +141,10 @@
         var li = el("li");
         var tile = el(full ? "article" : "a", "tile");
         tile.dataset.c = s[2];
-        if (!full) tile.href = "#/peredachi";
-        tile.appendChild(el("h3", null, s[0]));
+        if (!full) tile.href = "#/peredachi/" + slug(s[0]);
+        var h = el("h3", null, s[0]);
+        if (full) { tile.id = "show-" + slug(s[0]); h.tabIndex = -1; }
+        tile.appendChild(h);
         if (full) tile.appendChild(el("p", null, s[1]));
         var times = airTimes(s[0]);
         if (times.length) tile.appendChild(el("p", "tile__when", "Сегодня в " + times.join(" и ")));
@@ -175,7 +182,8 @@
   /* =========================================================
      Разделы: меню меняет правую часть, эфир не прерывается
      ========================================================= */
-  function routeName() { return location.hash.replace(/^#\/?/, "").split("/")[0]; }
+  function routeParts() { return location.hash.replace(/^#\/?/, "").split("/"); }
+  function routeName() { return routeParts()[0]; }
 
   function showRoute(userAction) {
     var name = routeName();
@@ -191,7 +199,13 @@
       var h1 = view.querySelector("h1");
       var content = $("content");
       if (content.getBoundingClientRect().top < 0 || window.innerWidth < 960) content.scrollIntoView();
-      // Фокус на заголовок раздела: диктор сразу прочитает, куда попал человек
+      // Фокус на заголовок раздела (или передачи): диктор сразу прочитает, куда попал человек
+      var target = routeParts()[1] && $("show-" + routeParts()[1]);
+      if (target) {
+        target.querySelector("h3").focus({ preventScroll: true });
+        target.scrollIntoView({ block: "center" });
+        return;
+      }
       h1.focus({ preventScroll: true });
       if (name === "programma") {
         var now = view.querySelector(".is-now");
@@ -221,7 +235,6 @@
     state = s;
     plays.forEach(function (b) {
       b.dataset.state = s;
-      b.setAttribute("aria-pressed", String(s !== "idle"));
       b.querySelector("[data-play-label]").textContent = s === "idle" ? "Слушать эфир" : "Пауза";
     });
     cover.classList.toggle("is-playing", s === "playing");
@@ -298,7 +311,6 @@
   function setMute(v) {
     muted = v;
     muteBtn.setAttribute("aria-pressed", String(v));
-    muteBtn.setAttribute("aria-label", v ? "Включить звук" : "Выключить звук");
     applyVolume();
   }
   muteBtn.addEventListener("click", function () { setMute(!muted); });
@@ -343,7 +355,7 @@
     ["scale", "scheme", "tracking", "leading", "font", "speech", "simple"].forEach(function (n) {
       $$('#a11y-panel input[name="' + n + '"]').forEach(function (i) { i.checked = String(a11y[n]) === i.value; });
     });
-    a11yBtn.setAttribute("aria-label", a11y.on ? "Настройки для слабовидящих" : "Версия для слабовидящих");
+    a11yBtn.querySelector("[data-a11y-label]").textContent = a11y.on ? "Настройки для слабовидящих" : "Версия для слабовидящих";
     store.set("vos-a11y", a11y);
   }
   function showPanel(v) {
@@ -471,6 +483,12 @@
     }
     e.preventDefault();
   });
+
+  /* Высота нижнего плеера растёт с размером шрифта — отступы считаем по факту */
+  var bar = document.querySelector(".bar");
+  function syncBar() { root.style.setProperty("--bar-h", Math.ceil(bar.getBoundingClientRect().height) + "px"); }
+  if ("ResizeObserver" in window) new ResizeObserver(syncBar).observe(bar);
+  syncBar();
 
   /* ---------- Запуск ---------- */
   if (a11y.on) showPanel(true);
