@@ -98,6 +98,8 @@
     $("now-time").textContent = cur.time + "–" + hhmm(cur.end) + " МСК";
     $("bar-show").textContent = cur.show;
     $("bar-title").textContent = title;
+    $("simple-show").textContent = cur.show;
+    $("simple-title").textContent = title;
     $$("[data-play]").forEach(function (b) { b.setAttribute("aria-description", cur.show + ". " + title); });
 
     $("next-time").textContent = next.time;
@@ -223,6 +225,7 @@
       b.querySelector("[data-play-label]").textContent = s === "idle" ? "Слушать эфир" : "Пауза";
     });
     cover.classList.toggle("is-playing", s === "playing");
+    $$("[data-simple-label]").forEach(function (n) { n.textContent = s === "idle" ? "Слушать" : "Пауза"; });
   }
   function url() { return STREAM_BASE + quality; }
 
@@ -266,12 +269,11 @@
     toast("Не удалось подключиться к эфиру");
   }
 
-  plays.forEach(function (b) {
-    b.addEventListener("click", function () {
-      if (state === "idle") start();
-      else { stop(); say("Пауза"); }
-    });
-  });
+  function toggle() {
+    if (state === "idle") start();
+    else { stop(); say("Пауза"); }
+  }
+  plays.forEach(function (b) { b.addEventListener("click", toggle); });
 
   $$('input[name="quality"]').forEach(function (i) {
     i.addEventListener("change", function () {
@@ -319,7 +321,7 @@
      Версия для слабовидящих
      ========================================================= */
   var panel = $("a11y-panel"), a11yBtn = $("a11y-toggle");
-  var DEFAULTS = { on: true, scale: 1.25, scheme: "bw", tracking: "0", leading: "1.5", font: "sans", speech: "off" };
+  var DEFAULTS = { on: true, scale: 1.25, scheme: "bw", tracking: "0", leading: "1.5", font: "sans", speech: "off", simple: "off" };
   var a11y = store.get("vos-a11y", {});
 
   function applyA11y() {
@@ -329,13 +331,16 @@
       root.style.setProperty("--scale", a11y.scale);
       root.style.setProperty("--tracking", a11y.tracking);
       root.style.setProperty("--leading", a11y.leading);
+      if (a11y.simple === "on") root.dataset.simple = "";
+      else delete root.dataset.simple;
     } else {
+      delete root.dataset.simple;
       delete root.dataset.scheme;
       delete root.dataset.font;
       ["--scale", "--tracking", "--leading"].forEach(function (p) { root.style.removeProperty(p); });
       a11y.speech = "off";
     }
-    ["scale", "scheme", "tracking", "leading", "font", "speech"].forEach(function (n) {
+    ["scale", "scheme", "tracking", "leading", "font", "speech", "simple"].forEach(function (n) {
       $$('#a11y-panel input[name="' + n + '"]').forEach(function (i) { i.checked = String(a11y[n]) === i.value; });
     });
     a11yBtn.setAttribute("aria-label", a11y.on ? "Настройки для слабовидящих" : "Версия для слабовидящих");
@@ -361,6 +366,10 @@
     if (!i.name) return;
     a11y[i.name] = i.name === "scale" ? +i.value : i.value;
     applyA11y();
+    if (i.name === "simple" && i.value === "on") {
+      document.querySelector(".play--huge").focus();
+      say("Режим одной кнопки");
+    }
     if (i.name === "speech") {
       if (i.value === "on") speak("Озвучка включена");
       else if (canSpeak) speechSynthesis.cancel();
@@ -421,6 +430,46 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && canSpeak) speechSynthesis.cancel();
+  });
+
+  $("simple-off").addEventListener("click", function () {
+    a11y.simple = "off";
+    applyA11y();
+    document.querySelector(".play--big").focus();
+    say("Обычный вид");
+  });
+
+  /* =========================================================
+     Горячие клавиши: Alt+Shift — не пересекаются с экранными дикторами
+     ========================================================= */
+  var keys = $("keys");
+  function openKeys(e) {
+    if (e) e.preventDefault();
+    if (keys.showModal) keys.showModal();
+  }
+  $$("[data-keys]").forEach(function (b) { b.addEventListener("click", openKeys); });
+
+  function setVolume(v) {
+    volume = Math.max(0, Math.min(100, v));
+    range.value = volume;
+    if (muted && volume > 0) setMute(false);
+    applyVolume();
+    store.set("vos-player", { quality: quality, volume: volume });
+    say("Громкость " + volume + " процентов");
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (!e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey) return;
+    switch (e.code) {
+      case "KeyP": toggle(); break;
+      case "ArrowUp": setVolume(volume + 10); break;
+      case "ArrowDown": setVolume(volume - 10); break;
+      case "KeyM": setMute(!muted); say(muted ? "Звук выключен" : "Звук включён"); break;
+      case "KeyN": say("Сейчас в эфире: " + $("now-show").textContent + ". " + $("now-title").textContent); break;
+      case "KeyK": openKeys(); break;
+      default: return;
+    }
+    e.preventDefault();
   });
 
   /* ---------- Запуск ---------- */
