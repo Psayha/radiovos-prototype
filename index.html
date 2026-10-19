@@ -4,11 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Радио ВОС — интернет-радио Всероссийского общества слепых</title>
-  <meta name="description" content="Прямой эфир, программа передач и анонсы Радио ВОС — официальной интернет-радиостанции Всероссийского общества слепых.">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Прямой эфир, программа передач и анонсы Радио ВОС — интернет-радиостанции Всероссийского общества слепых.">
+  <meta name="theme-color" content="#ffd100">
+
+  <!-- Превью ссылки в мессенджерах и соцсетях -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Радио ВОС">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:url" content="https://psayha.github.io/radiovos-prototype/">
+  <meta property="og:title" content="Радио ВОС — для тех, кто умеет слушать">
+  <meta property="og:description" content="Интернет-радио Всероссийского общества слепых: прямой эфир, программа передач и анонсы.">
+  <meta property="og:image" content="https://psayha.github.io/radiovos-prototype/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Радио ВОС: надпись шрифтом Брайля в цветах флага ВОС">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="preload" href="assets/fonts/golos-text-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/css/main.css?v=15">
+  <link rel="apple-touch-icon" href="assets/img/og-icon.png">
+  <link rel="stylesheet" href="assets/css/main.css?v=25">
   <script>
     try {
       var s = JSON.parse(localStorage.getItem("vos-a11y") || "{}"), r = document.documentElement;
@@ -28,19 +43,16 @@
   <a class="skip-link" href="#content">К содержанию</a>
   <a class="skip-link" href="#keys" data-keys>Горячие клавиши</a>
 
-  <!-- ============ Верхняя строка: жёлтая полоса флага ============ -->
+  <!-- ============ Шапка — жёлтая полоса флага ============ -->
   <header class="topline">
-    <div class="topline__group">
     <button class="topline__btn" type="button" id="a11y-toggle" aria-expanded="false" aria-controls="a11y-panel">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg>
-      <span data-a11y-label>Версия для слабовидящих</span>
+      <span data-a11y-label><span class="topline__long">Версия для слабовидящих</span><span class="topline__short">Для слабовидящих</span></span>
     </button>
     <button class="topline__btn" type="button" id="big-toggle" aria-pressed="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
-      <span>Крупный интерфейс</span>
+      <span><span class="topline__long">Крупный интерфейс</span><span class="topline__short">Крупно</span></span>
     </button>
-    </div>
-    <a class="topline__phone" href="tel:88001000015">Звонок в эфир: 8-800-100-00-15</a>
   </header>
 
   <!-- ============ Версия для слабовидящих ============ -->
@@ -112,14 +124,12 @@
 
   <div class="app">
    <div class="layout">
-    <!-- ============ Левая колонка: эфир и меню ============ -->
+    <!-- ============ Слева: эфир и меню ============ -->
     <aside class="side" aria-label="Эфир и разделы">
-      <div class="side__top">
-        <a class="logo" href="#/" aria-label="Радио ВОС, на главную">
-          <img src="assets/img/favicon.svg" alt="" width="40" height="40">
-          <span class="logo__text"><b>Радио ВОС</b><small>Для тех, кто умеет слушать</small></span>
-        </a>
-      </div>
+      <a class="logo" href="#" aria-label="Радио ВОС, в начало страницы">
+        <img src="assets/img/logo.svg" alt="" width="48" height="48">
+        <span class="logo__text"><b>Радио ВОС</b><small>Для тех, кто умеет слушать</small></span>
+      </a>
 
       <section class="onair" id="player" aria-labelledby="onair-title" tabindex="-1">
         <h2 class="visually-hidden" id="onair-title">Прямой эфир</h2>
@@ -152,193 +162,98 @@
         </fieldset>
       </section>
 
-      <nav class="menu" aria-label="Разделы сайта">
+      <nav class="menu" aria-label="Разделы главной страницы">
         <ul>
-          <li><a href="#/" data-route="">
+          <li><a href="#" aria-current="page">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 19a10 10 0 0 1 0-14M19 5a10 10 0 0 1 0 14"/></svg>Эфир</a></li>
-          <li><a href="#/programma" data-route="programma">
+          <li><a href="#programma" data-anchor>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Программа</a></li>
-          <li><a href="#/peredachi" data-route="peredachi">
+          <li><a href="#peredachi" data-anchor>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>Передачи</a></li>
-          <li><a href="#/anonsy" data-route="anonsy">
+          <li><a href="#anonsy" data-anchor>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10v4h3l7 4V6L7 10H4zM18 9a4 4 0 0 1 0 6"/></svg>Анонсы</a></li>
-          <li><a href="#/o-radio" data-route="o-radio">
+          <li><a href="#o-radio" data-anchor>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>О радио</a></li>
-          <li><a href="#/kontakty" data-route="kontakty">
+          <li><a href="#kontakty" data-anchor>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>Контакты</a></li>
         </ul>
       </nav>
-
     </aside>
 
-    <!-- ============ Правая часть: модули ============ -->
+    <!-- ============ Справа: модули ============ -->
     <div class="content">
     <main id="content" tabindex="-1">
+      <h1 class="visually-hidden">Радио ВОС — интернет-радио Всероссийского общества слепых</h1>
 
-      <!-- Эфир -->
-      <section class="view" data-view="" aria-labelledby="v-home">
-        <h1 class="visually-hidden" id="v-home" tabindex="-1">Радио ВОС — интернет-радио Всероссийского общества слепых</h1>
-        <div class="grid">
+      <div class="home">
+        <div class="stack">
           <section class="mod mod--next">
-            <h2 id="m-next">Далее</h2>
-            <p class="next__time"><time id="next-time"></time></p>
-            <p class="next__show" id="next-show"></p>
-            <p class="next__title" id="next-title"></p>
-          </section>
-
-          <section class="mod mod--call">
-            <h2 id="m-call">Звонок в эфир</h2>
-            <a class="call__phone" href="tel:88001000015">8-800-100-00-15</a>
-            <p>Бесплатно по России</p>
-            <a class="call__wa" href="https://wa.me/79037072671">WhatsApp и СМС: <span class="nw">+7 903 707-26-71</span></a>
-          </section>
-
-          <section class="mod mod--today">
             <div class="mod__head">
-              <h2 id="m-today">Сегодня в эфире</h2>
-              <a class="more" href="#/programma">Вся программа</a>
+              <h2>Далее</h2>
+              <p class="mod__meta" id="next-in"></p>
             </div>
-            <ol class="slots" id="today-list"></ol>
+            <p class="next__time"><time id="next-time"></time></p>
+            <div>
+              <p class="next__show" id="next-show"></p>
+              <p class="next__title" id="next-title"></p>
+            </div>
+            <p class="next__desc" id="next-desc"></p>
           </section>
 
           <section class="mod mod--app">
-            <h2 id="m-app">Радио ВОС в телефоне</h2>
+            <h2>Радио ВОС в телефоне</h2>
             <p>Эфир и архив программ в приложении для Android.</p>
-            <a class="btn btn--accent" href="https://radiovos.ru/download/radiovos.apk" download>
+            <a class="btn btn--dark" href="https://radiovos.ru/download/radiovos.apk" download>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>Скачать приложение</a>
           </section>
-          <section class="mod mod--about">
-            <h2 id="m-about">15 лет в эфире</h2>
-            <p>Некоммерческая радиостанция Всероссийского общества слепых: события ВОС, прямые трансляции фестивалей, спорт с тифлокомментарием, аудиокниги и музыка.</p>
-            <a class="more" href="#/o-radio">О радио</a>
-          </section>
-          <section class="mod mod--wide">
-            <div class="mod__head">
-              <h2 id="m-shows">Передачи</h2>
-              <a class="more" href="#/peredachi">Все передачи</a>
-            </div>
-            <ul class="tiles" data-shows="8"></ul>
-          </section>
-
-          <section class="mod mod--wide">
-            <div class="mod__head">
-              <h2 id="m-news">Анонсы</h2>
-              <a class="more" href="#/anonsy">Все анонсы</a>
-            </div>
-            <ul class="cards" data-news="3"></ul>
-          </section>
-
-
         </div>
-      </section>
 
-      <!-- Программа -->
-      <section class="view" data-view="programma" aria-labelledby="v-prog" hidden>
-        <div class="view__head">
-          <h1 id="v-prog" tabindex="-1">Программа передач</h1>
-          <p class="view__sub" id="prog-date"></p>
-        </div>
-        <div class="mod">
-          <ol class="slots slots--full" id="full-list"></ol>
-        </div>
-      </section>
-
-      <!-- Передачи -->
-      <section class="view" data-view="peredachi" aria-labelledby="v-shows" hidden>
-        <div class="view__head">
-          <h1 id="v-shows" tabindex="-1">Передачи</h1>
-        </div>
-        <ul class="tiles tiles--full" data-shows="all"></ul>
-      </section>
-
-      <!-- Анонсы -->
-      <section class="view" data-view="anonsy" aria-labelledby="v-news" hidden>
-        <div class="view__head">
-          <h1 id="v-news" tabindex="-1">Анонсы</h1>
-        </div>
-        <ul class="cards cards--full" data-news="all"></ul>
-      </section>
-
-      <!-- О радио -->
-      <section class="view" data-view="o-radio" aria-labelledby="v-about" hidden>
-        <div class="view__head">
-          <h1 id="v-about" tabindex="-1">О радио</h1>
-        </div>
-        <div class="grid">
-          <section class="mod mod--wide mod--lead">
-            <h2 id="a-who">Для тех, кто умеет слушать</h2>
-            <p>«Радио ВОС» — некоммерческая интернет-радиостанция Всероссийского общества слепых. Учредители — Общероссийская общественная организация инвалидов «Всероссийское ордена Трудового Красного Знамени общество слепых» и Культурно-спортивный реабилитационный комплекс ВОС.</p>
-          </section>
-          <section class="mod">
-            <h2 id="a-1">События ВОС</h2>
-            <p>Заседания Центрального правления и Совета директоров, реабилитационные форумы, еженедельные интервью с президентом ВОС В. В. Сипкиным и вице-президентами.</p>
-          </section>
-          <section class="mod">
-            <h2 id="a-2">Прямые трансляции</h2>
-            <p>Фестивали «Дары вдохновения» и «Гармония звука», Кубок «КИСИ», «Творческая ярмарка», бизнес-марафон «12 стульев», фестиваль театров «Пространство равных возможностей».</p>
-          </section>
-          <section class="mod">
-            <h2 id="a-3">Спорт с тифлокомментарием</h2>
-            <p>Футбольные и хоккейные матчи, Парад Победы с Красной площади, тематические дни к государственным праздникам.</p>
-          </section>
-          <section class="mod">
-            <h2 id="a-team">Редакция</h2>
-            <dl class="team">
-              <dt>Марина Сухарькова</dt><dd>главный редактор</dd>
-              <dt>Виктория Самойлова</dt><dd>программный директор</dd>
-              <dt>Николай Куневич</dt><dd>заместитель главного редактора</dd>
-              <dt>Антон Агишев</dt><dd>редактор информационных программ</dd>
-            </dl>
-          </section>
-          <section class="mod">
-            <h2 id="a-legal">Сведения о СМИ</h2>
-            <p><span class="age">12+</span></p>
-            <p>Свидетельство Роскомнадзора Эл № ФС77-46389 от 31.08.2011</p>
-          </section>
-        </div>
-      </section>
-
-      <!-- Контакты -->
-      <section class="view" data-view="kontakty" aria-labelledby="v-contacts" hidden>
-        <div class="view__head">
-          <h1 id="v-contacts" tabindex="-1">Контакты</h1>
-        </div>
-        <div class="grid">
-          <section class="mod mod--call">
-            <h2 id="c-air">Прямой эфир</h2>
+        <div class="stack">
+          <section class="mod mod--call" id="call">
+            <p class="call__live"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="#c62828"/></svg>Прямой эфир — звоните</p>
+            <h2>Звонок в эфир</h2>
             <a class="call__phone" href="tel:88001000015">8-800-100-00-15</a>
             <p>Бесплатно по России</p>
             <a class="call__wa" href="https://wa.me/79037072671">WhatsApp и СМС: <span class="nw">+7 903 707-26-71</span></a>
           </section>
-          <section class="mod">
-            <h2 id="c-office">Редакция</h2>
-            <dl class="team">
-              <dt><a href="tel:84999433601">8 (499) 943-36-01</a></dt><dd>телефон редакции</dd>
-              <dt><a href="mailto:radio@radiovos.ru">radio@radiovos.ru</a></dt><dd>письма и музыкальные заявки</dd>
-              <dt><a href="mailto:novosti@radiovos.ru">novosti@radiovos.ru</a></dt><dd>информационные программы</dd>
-              <dt><a href="https://vk.com/radiovos">vk.com/radiovos</a></dt><dd>сообщество во ВКонтакте</dd>
-            </dl>
-          </section>
-          <section class="mod mod--wide">
-            <h2 id="c-addr">Как добраться</h2>
-            <address>125252, Москва, ул. Куусинена, 19а, здание КСРК ВОС</address>
-            <p>Метро «Полежаевская», МЦК «Зорге». От метро «Полежаевская» и «Сокол» — троллейбусы 43, 65, 86, автобус 48 до остановки «Центральный Дом культуры ВОС».</p>
+
+          <section class="mod mod--about" id="o-radio" tabindex="-1">
+            <h2>15 лет в эфире</h2>
+            <p>Некоммерческая радиостанция Всероссийского общества слепых: события ВОС, прямые трансляции фестивалей, спорт с тифлокомментарием, аудиокниги и музыка.</p>
           </section>
         </div>
-      </section>
 
+        <section class="mod mod--today" id="programma" tabindex="-1">
+          <div class="mod__head">
+            <h2>Сегодня в эфире</h2>
+            <p class="mod__meta" id="today-date"></p>
+          </div>
+          <ol class="slots" id="today-list"></ol>
+        </section>
+
+        <section class="mod mod--wide" id="peredachi" tabindex="-1">
+          <h2>Передачи</h2>
+          <ul class="tiles" id="tiles"></ul>
+        </section>
+
+        <section class="mod mod--wide" id="anonsy" tabindex="-1">
+          <h2>Анонсы</h2>
+          <ul class="cards" id="cards"></ul>
+        </section>
+      </div>
     </main>
 
-    <footer class="foot">
+    <footer class="foot" id="kontakty" tabindex="-1">
       <p class="foot__title"><span class="age" aria-label="Возрастное ограничение 12+">12+</span> Радио ВОС — интернет-радиостанция Всероссийского общества слепых</p>
       <dl class="foot__data">
         <div><dt>Свидетельство о регистрации СМИ</dt><dd>Эл № ФС77-46389 от 31.08.2011, выдано Роскомнадзором</dd></div>
         <div><dt>Учредители</dt><dd>Всероссийское ордена Трудового Красного Знамени общество слепых; Культурно-спортивный реабилитационный комплекс ВОС</dd></div>
         <div><dt>Главный редактор</dt><dd>Сухарькова Марина Петровна</dd></div>
         <div><dt>Редакция</dt><dd><a href="tel:84999433601">8 (499) 943-36-01</a>, <a href="mailto:radio@radiovos.ru">radio@radiovos.ru</a></dd></div>
-        <div><dt>Адрес</dt><dd>125252, Москва, ул. Куусинена, 19а, здание КСРК ВОС</dd></div>
+        <div><dt>Звонок в эфир</dt><dd><a href="tel:88001000015">8-800-100-00-15</a>, WhatsApp и СМС <a href="https://wa.me/79037072671" class="nw">+7 903 707-26-71</a></dd></div>
+        <div><dt>Адрес</dt><dd>125252, Москва, ул. Куусинена, 19а, здание КСРК ВОС. Метро «Полежаевская», МЦК «Зорге»</dd></div>
       </dl>
-      <p class="foot__copy">© 2011–2026 Радио ВОС, КСРК ВОС · <a href="https://vos.org.ru">Всероссийское общество слепых</a></p>
+      <p>© 2011–2026 Радио ВОС, КСРК ВОС · <a href="https://vos.org.ru">Всероссийское общество слепых</a> · <a href="https://vk.com/radiovos">ВКонтакте</a></p>
     </footer>
     </div>
    </div>
@@ -420,7 +335,7 @@
   <div class="visually-hidden" id="sr-status" role="status" aria-live="polite"></div>
   <div class="toast" id="toast" role="alert" hidden></div>
 
-  <script src="assets/js/data.js?v=15"></script>
-  <script src="assets/js/main.js?v=15"></script>
+  <script src="assets/js/data.js?v=25"></script>
+  <script src="assets/js/main.js?v=25"></script>
 </body>
 </html>

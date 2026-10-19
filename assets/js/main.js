@@ -3,18 +3,12 @@
   "use strict";
 
   var STREAM_BASE = "http://radiovos.ru:9000/";
-  var override = new URLSearchParams(location.search).get("stream");
+  var params = new URLSearchParams(location.search);
+  var override = params.get("stream");
   if (override && /^https?:\/\//.test(override)) STREAM_BASE = override;
+  var FORCE_LIVE = params.get("live") === "1";   // показать режим прямого эфира на демонстрации
   var CONNECT_TIMEOUT = 15000;
   var QUALITY = { "radiovos-128": "высокое", "radiovos-96": "хорошее", "radiovos-64": "среднее", "radiovos-32": "низкое" };
-  var TITLES = {
-    "": "Радио ВОС — интернет-радио Всероссийского общества слепых",
-    "programma": "Программа передач — Радио ВОС",
-    "peredachi": "Передачи — Радио ВОС",
-    "anonsy": "Анонсы — Радио ВОС",
-    "o-radio": "О радио — Радио ВОС",
-    "kontakty": "Контакты — Радио ВОС"
-  };
 
   var root = document.documentElement;
   var $ = function (id) { return document.getElementById(id); };
@@ -23,6 +17,11 @@
     var n = document.createElement(tag);
     if (cls) n.className = cls;
     if (text != null) n.textContent = text;
+    return n;
+  }
+  function svgEl(tag, attrs) {
+    var n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
     return n;
   }
 
@@ -46,16 +45,63 @@
   }
 
   /* =========================================================
+     Шрифт Брайля (русский): номера точек 1–6 для каждой буквы
+     ========================================================= */
+  var BRAILLE = {
+    "а": [1], "б": [1, 2], "в": [2, 4, 5, 6], "г": [1, 2, 4, 5], "д": [1, 4, 5], "е": [1, 5], "ё": [1, 6],
+    "ж": [2, 4, 5], "з": [1, 3, 5, 6], "и": [2, 4], "й": [1, 2, 3, 4, 6], "к": [1, 3], "л": [1, 2, 3],
+    "м": [1, 3, 4], "н": [1, 3, 4, 5], "о": [1, 3, 5], "п": [1, 2, 3, 4], "р": [1, 2, 3, 5], "с": [2, 3, 4],
+    "т": [2, 3, 4, 5], "у": [1, 3, 6], "ф": [1, 2, 4], "х": [1, 2, 5], "ц": [1, 4], "ч": [1, 2, 3, 4, 5],
+    "ш": [1, 5, 6], "щ": [1, 3, 4, 6], "ъ": [1, 2, 3, 5, 6], "ы": [2, 3, 4, 6], "ь": [2, 3, 4, 5, 6],
+    "э": [2, 4, 6], "ю": [1, 2, 5, 6], "я": [1, 2, 4, 6]
+  };
+  function brailleCells(text) {
+    return text.toLowerCase().split("").map(function (c) {
+      if (c === " ") return [];
+      return BRAILLE[c] || null;
+    }).filter(function (c) { return c !== null; });
+  }
+  function brailleText(text) {
+    return brailleCells(text).map(function (dots) {
+      var code = 0x2800;
+      dots.forEach(function (d) { code += [0, 1, 2, 4, 8, 16, 32][d]; });
+      return String.fromCharCode(code);
+    }).join("");
+  }
+  /* Узор плитки: название передачи точками Брайля, в две строки */
+  function brailleArt(text) {
+    var cells = brailleCells(text);
+    var perRow = cells.length || 1, rows = 1;   // одна строка — как надпись
+    var cw = 21, rh = 28, r = 3.6;
+    var svg = svgEl("svg", { viewBox: "0 0 " + (perRow * cw) + " " + (rows * rh), class: "tile__art", "aria-hidden": "true", focusable: "false" });
+    cells.forEach(function (dots, i) {
+      var x0 = (i % perRow) * cw + 5, y0 = Math.floor(i / perRow) * rh + 5;
+      for (var d = 1; d <= 6; d++) {
+        var on = dots.indexOf(d) !== -1;
+        svg.appendChild(svgEl("circle", {
+          cx: x0 + (d > 3 ? 9 : 0), cy: y0 + ((d - 1) % 3) * 9,
+          r: on ? r : 1.3, class: on ? "on" : "off"
+        }));
+      }
+    });
+    return svg;
+  }
+
+  /* =========================================================
      Время и программа (МСК)
      ========================================================= */
+  var LIVE_WORDS = /прям(ой|ая)\s+(эфир|трансляц)/i;
   var schedule = (window.VOS_SCHEDULE || []).map(function (r) {
     var hm = r[0].split(":");
-    return { time: r[0], start: +hm[0] * 60 + +hm[1], show: r[1], title: r[2] };
+    return {
+      time: r[0], start: +hm[0] * 60 + +hm[1], show: r[1], title: r[2] || "",
+      live: !!r[3] || LIVE_WORDS.test(r[1] + " " + (r[2] || ""))
+    };
   });
   schedule.forEach(function (it, i) { it.end = i + 1 < schedule.length ? schedule[i + 1].start : 1440; });
 
   var mskParts = new Intl.DateTimeFormat("ru-RU", { timeZone: "Europe/Moscow", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-  var mskDay = new Intl.DateTimeFormat("ru-RU", { timeZone: "Europe/Moscow", weekday: "long", day: "numeric", month: "long" });
+  var mskDay = new Intl.DateTimeFormat("ru-RU", { timeZone: "Europe/Moscow", day: "numeric", month: "long" });
   function mskNow() {
     var p = {};
     mskParts.formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
@@ -70,164 +116,139 @@
     for (var i = schedule.length - 1; i >= 0; i--) if (schedule[i].start <= m) return i;
     return 0;
   }
-
-  function slotNode(it, state) {
-    var li = el("li", "slot" + (state ? " is-" + state : ""));
-    if (state === "now") li.setAttribute("aria-current", "true");
-    var t = el("time", "slot__time", it.time);
-    var body = el("div");
-    if (state === "now") body.appendChild(el("span", "slot__now", "Сейчас"));
-    body.appendChild(el("p", "slot__show", it.show));
-    if (it.title) body.appendChild(el("p", "slot__title", it.title));
-    li.appendChild(t);
-    li.appendChild(body);
+  function plural(n, one, few, many) {
+    var a = n % 10, b = n % 100;
+    if (a === 1 && b !== 11) return one;
+    if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
+    return many;
+  }
+  function inWords(min) {
+    if (min < 60) return "через " + min + " " + plural(min, "минуту", "минуты", "минут");
+    var h = Math.floor(min / 60), m = min % 60;
+    return "через " + h + " " + plural(h, "час", "часа", "часов") + (m ? " " + m + " мин" : "");
+  }
+  function slotNode(it, isNow) {
+    var li = el("li", "slot" + (isNow ? " is-now" : ""));
+    if (isNow) li.setAttribute("aria-current", "true");
+    var top = el("div", "slot__top");
+    var t = el("time", "pill", it.time);
+    top.appendChild(t);
+    if (isNow) top.appendChild(el("span", "pill pill--live", "Сейчас"));
+    else if (it.live) top.appendChild(el("span", "pill", "Прямой эфир"));
+    li.appendChild(top);
+    li.appendChild(el("p", "slot__show", it.show));
+    if (it.title) li.appendChild(el("p", "slot__title", it.title));
     return li;
   }
 
   var lastIdx = -1;
   function renderNow() {
     if (!schedule.length) return;
-    var idx = currentIndex(mskNow());
+    var now = mskNow();
+    var idx = currentIndex(now);
+    var cur = schedule[idx], next = schedule[idx + 1] || schedule[0];
+
+    // «через N минут» обновляем каждый раз, остальное — только при смене передачи
+    var left = ((next.start - now) + 1440) % 1440 || 1440;
+    $("next-in").textContent = inWords(left);
     if (idx === lastIdx) return;
     lastIdx = idx;
-    var cur = schedule[idx], next = schedule[idx + 1] || schedule[0];
-    var title = cur.title || "Прямой эфир";
 
-    $("now-show").textContent = cur.show;
+    // Без темы выпуска (например, новости): над названием — «Радио ВОС», крупно — передача
+    var label = cur.title ? cur.show : "Радио ВОС";
+    var title = cur.title || cur.show;
+    $("now-show").textContent = label;
     $("now-title").textContent = title;
     $("now-time").textContent = cur.time + "–" + hhmm(cur.end) + " МСК";
-    $("bar-show").textContent = cur.show;
+    $("bar-show").textContent = label;
     $("bar-title").textContent = title;
-    $("simple-show").textContent = cur.show;
+    $("simple-show").textContent = label;
     $("simple-title").textContent = title;
-    $$("[data-play]").forEach(function (b) { b.setAttribute("aria-description", cur.show + ". " + title); });
+    $$("[data-play]").forEach(function (b) { b.setAttribute("aria-description", cur.title ? cur.show + ". " + title : title); });
 
     $("next-time").textContent = next.time;
     $("next-show").textContent = next.show;
     $("next-title").textContent = next.title;
+    var about = (window.VOS_ABOUT || {})[next.show] || showInfo(next.show);
+    $("next-desc").textContent = about;
+    $("next-desc").hidden = !about;
 
-    // Сегодня: текущая и пять следующих
+    // Звонок в эфир загорается только во время прямого эфира
+    var call = $("call");
+    var live = cur.live || FORCE_LIVE;
+    call.classList.toggle("is-live", live);
+
+    $("today-date").textContent = mskDay.format(new Date()) + " · МСК";
     var today = $("today-list");
     today.innerHTML = "";
-    schedule.slice(idx, idx + 5).forEach(function (it, i) { today.appendChild(slotNode(it, i === 0 ? "now" : "")); });
-
-    // Полная программа
-    var full = $("full-list");
-    full.innerHTML = "";
-    schedule.forEach(function (it, i) { full.appendChild(slotNode(it, i < idx ? "past" : i === idx ? "now" : "")); });
-    var d = mskDay.format(new Date());
-    $("prog-date").textContent = d.charAt(0).toUpperCase() + d.slice(1) + " · МСК";
+    schedule.slice(idx, idx + 5).forEach(function (it, i) { today.appendChild(slotNode(it, i === 0)); });
 
     var big = $("big-list");
     big.innerHTML = "";
-    schedule.slice(idx).forEach(function (it, i) {
-      var li = el("li", i === 0 ? "is-now" : "");
-      if (i === 0) li.setAttribute("aria-current", "true");
-      li.appendChild(el("time", null, it.time));
-      var b = el("div");
-      if (i === 0) b.appendChild(el("span", "slot__now", "Сейчас"));
-      b.appendChild(el("b", null, it.show));
-      if (it.title) b.appendChild(el("small", null, it.title));
-      li.appendChild(b);
-      big.appendChild(li);
-    });
+    schedule.slice(idx).forEach(function (it, i) { big.appendChild(slotNode(it, i === 0)); });
 
     renderShows();
     updateMediaSession(cur);
   }
 
-  /* ---------- Передачи ---------- */
-  var TR = { а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"e",ж:"zh",з:"z",и:"i",й:"y",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"h",ц:"c",ч:"ch",ш:"sh",щ:"sch",ъ:"",ы:"y",ь:"",э:"e",ю:"yu",я:"ya" };
-  function slug(name) {
-    return name.toLowerCase().split("").map(function (c) { return c in TR ? TR[c] : c; }).join("")
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  /* ---------- Передачи: плитки с узором Брайля ---------- */
+  function showInfo(name) {
+    var s = (window.VOS_SHOWS || []).filter(function (x) { return x[0] === name; })[0];
+    return s ? s[1] : "";
   }
   function airTimes(name) {
     return schedule.filter(function (it) { return it.show === name; }).map(function (it) { return it.time; });
   }
   function renderShows() {
-    var shows = window.VOS_SHOWS || [];
-    $$("[data-shows]").forEach(function (list) {
-      var limit = list.dataset.shows === "all" ? shows.length : +list.dataset.shows;
-      var full = list.dataset.shows === "all";
-      list.innerHTML = "";
-      shows.slice(0, limit).forEach(function (s) {
-        var li = el("li");
-        var tile = el(full ? "article" : "a", "tile");
-        tile.dataset.c = s[2];
-        if (!full) tile.href = "#/peredachi/" + slug(s[0]);
-        var h = el("h3", null, s[0]);
-        if (full) { tile.id = "show-" + slug(s[0]); h.tabIndex = -1; }
-        tile.appendChild(h);
-        if (full) tile.appendChild(el("p", null, s[1]));
-        var times = airTimes(s[0]);
-        if (times.length) tile.appendChild(el("p", "tile__when", "Сегодня в " + times.join(" и ")));
-        li.appendChild(tile);
-        list.appendChild(li);
-      });
+    var list = $("tiles");
+    list.innerHTML = "";
+    (window.VOS_SHOWS || []).slice(0, 8).forEach(function (s) {
+      var li = el("li");
+      if (s[0].length > 15) li.className = "is-long";
+      var tile = el("article", "tile");
+      tile.dataset.c = s[2];
+      if (s[3]) {                       // загруженная обложка
+        tile.classList.add("has-cover");
+        tile.style.setProperty("--cover", "url('" + s[3] + "')");
+      }
+      tile.appendChild(brailleArt(s[0]));
+      tile.appendChild(el("h3", null, s[0]));
+      var times = airTimes(s[0]);
+      if (times.length) tile.appendChild(el("p", "tile__when", "Сегодня в " + times.join(", ")));
+      li.appendChild(tile);
+      list.appendChild(li);
     });
   }
 
   /* ---------- Анонсы ---------- */
   var dayMonth = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" });
   function renderNews() {
-    var news = window.VOS_NEWS || [];
-    $$("[data-news]").forEach(function (list) {
-      var limit = list.dataset.news === "all" ? news.length : +list.dataset.news;
-      list.innerHTML = "";
-      news.slice(0, limit).forEach(function (n) {
-        var li = el("li");
-        var card = el("article", "card");
-        var meta = el("p", "card__meta");
-        var t = el("time", null, dayMonth.format(new Date(n[0] + "T12:00:00")));
-        t.setAttribute("datetime", n[0]);
-        meta.appendChild(t);
-        meta.appendChild(el("span", "card__show", n[1]));
-        card.appendChild(meta);
-        card.appendChild(el("h3", null, n[2]));
-        card.appendChild(el("p", "card__text", n[3]));
-        card.appendChild(el("p", "card__air", "В эфире " + n[4]));
-        li.appendChild(card);
-        list.appendChild(li);
-      });
+    var list = $("cards");
+    list.innerHTML = "";
+    (window.VOS_NEWS || []).slice(0, 3).forEach(function (n) {
+      var li = el("li");
+      var card = el("article", "card");
+      var meta = el("p", "card__meta");
+      var t = el("time", null, dayMonth.format(new Date(n[0] + "T12:00:00")));
+      t.setAttribute("datetime", n[0]);
+      meta.appendChild(t);
+      meta.appendChild(el("span", "card__show", n[1]));
+      card.appendChild(meta);
+      card.appendChild(el("h3", null, n[2]));
+      card.appendChild(el("p", "card__text", n[3]));
+      card.appendChild(el("p", "card__air", "В эфире " + n[4]));
+      li.appendChild(card);
+      list.appendChild(li);
     });
   }
 
-  /* =========================================================
-     Разделы: меню меняет правую часть, эфир не прерывается
-     ========================================================= */
-  function routeParts() { return location.hash.replace(/^#\/?/, "").split("/"); }
-  function routeName() { return routeParts()[0]; }
-
-  function showRoute(userAction) {
-    var name = routeName();
-    if (!(name in TITLES)) name = "";
-    $$(".view").forEach(function (v) { v.hidden = v.dataset.view !== name; });
-    $$(".menu a").forEach(function (a) {
-      if (a.dataset.route === name) a.setAttribute("aria-current", "page");
-      else a.removeAttribute("aria-current");
+  /* ---------- Меню: переходы по разделам главной ---------- */
+  $$("[data-anchor]").forEach(function (a) {
+    a.addEventListener("click", function () {
+      var target = document.querySelector(a.getAttribute("href"));
+      if (target) setTimeout(function () { target.focus({ preventScroll: true }); }, 0);
     });
-    document.title = TITLES[name];
-    if (userAction) {
-      var view = document.querySelector('.view[data-view="' + name + '"]');
-      var h1 = view.querySelector("h1");
-      var content = $("content");
-      if (content.getBoundingClientRect().top < 0 || window.innerWidth < 960) content.scrollIntoView();
-      // Фокус на заголовок раздела (или передачи): диктор сразу прочитает, куда попал человек
-      var target = routeParts()[1] && $("show-" + routeParts()[1]);
-      if (target) {
-        target.querySelector("h3").focus({ preventScroll: true });
-        target.scrollIntoView({ block: "center" });
-        return;
-      }
-      h1.focus({ preventScroll: true });
-      if (name === "programma") {
-        var now = view.querySelector(".is-now");
-        if (now) now.scrollIntoView({ block: "center" });
-      }
-    }
-  }
-  window.addEventListener("hashchange", function () { showRoute(true); });
+  });
 
   /* =========================================================
      Плеер
@@ -295,7 +316,6 @@
     stop();
     toast("Не удалось подключиться к эфиру");
   }
-
   function toggle() {
     if (state === "idle") start();
     else { stop(); say("Пауза"); }
@@ -316,17 +336,25 @@
     range.setAttribute("aria-valuetext", volume + " процентов");
     if (audio) { audio.volume = volume / 100; audio.muted = muted; }
   }
+  function setMute(v) {
+    muted = v;
+    muteBtn.setAttribute("aria-pressed", String(v));
+    applyVolume();
+  }
+  function setVolume(v) {
+    volume = Math.max(0, Math.min(100, v));
+    range.value = volume;
+    if (muted && volume > 0) setMute(false);
+    applyVolume();
+    store.set("vos-player", { quality: quality, volume: volume });
+    say("Громкость " + volume + " процентов");
+  }
   range.addEventListener("input", function () {
     volume = +this.value;
     if (muted && volume > 0) setMute(false);
     applyVolume();
     store.set("vos-player", { quality: quality, volume: volume });
   });
-  function setMute(v) {
-    muted = v;
-    muteBtn.setAttribute("aria-pressed", String(v));
-    applyVolume();
-  }
   muteBtn.addEventListener("click", function () { setMute(!muted); });
   applyVolume();
 
@@ -369,7 +397,8 @@
     ["scale", "scheme", "tracking", "leading", "font", "speech", "simple"].forEach(function (n) {
       $$('#a11y-panel input[name="' + n + '"]').forEach(function (i) { i.checked = String(a11y[n]) === i.value; });
     });
-    a11yBtn.querySelector("[data-a11y-label]").textContent = a11y.on ? "Настройки для слабовидящих" : "Версия для слабовидящих";
+    a11yBtn.querySelector(".topline__long").textContent = a11y.on ? "Настройки для слабовидящих" : "Версия для слабовидящих";
+    a11yBtn.querySelector(".topline__short").textContent = a11y.on ? "Настройки" : "Для слабовидящих";
     store.set("vos-a11y", a11y);
   }
   function showPanel(v) {
@@ -378,7 +407,7 @@
   }
   a11yBtn.addEventListener("click", function () {
     if (!a11y.on) {
-      a11y = Object.assign({}, DEFAULTS);
+      a11y = Object.assign({}, DEFAULTS, { simple: a11y.simple || "off" });
       applyA11y();
       showPanel(true);
       panel.querySelector("input:checked").focus();
@@ -413,7 +442,6 @@
   var ruVoice = null;
   function pickVoice() { ruVoice = speechSynthesis.getVoices().filter(function (v) { return /^ru/i.test(v.lang); })[0] || null; }
   if (canSpeak) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-
   var speaking = null;
   function speak(text, node) {
     if (!canSpeak || !text) return;
@@ -462,8 +490,6 @@
     $$("[data-big-view]").forEach(function (v) { v.hidden = v.dataset.bigView !== name; });
     if (name === "prog") {
       $("big-prog-title").focus();
-      var now = $("big-list").querySelector(".is-now");
-      if (now) now.scrollIntoView({ block: "center" });
     } else {
       document.querySelector(".big-tile--play").focus();
     }
@@ -493,16 +519,6 @@
     if (keys.showModal) keys.showModal();
   }
   $$("[data-keys]").forEach(function (b) { b.addEventListener("click", openKeys); });
-
-  function setVolume(v) {
-    volume = Math.max(0, Math.min(100, v));
-    range.value = volume;
-    if (muted && volume > 0) setMute(false);
-    applyVolume();
-    store.set("vos-player", { quality: quality, volume: volume });
-    say("Громкость " + volume + " процентов");
-  }
-
   document.addEventListener("keydown", function (e) {
     if (!e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey) return;
     switch (e.code) {
@@ -517,22 +533,21 @@
     e.preventDefault();
   });
 
-  /* Высота нижнего плеера растёт с размером шрифта — отступы считаем по факту */
+  /* ---------- Высота шапки и плеера — для отступов и прокрутки к фокусу ---------- */
   var bar = document.querySelector(".bar");
   var topline = document.querySelector(".topline");
-  function syncBar() {
+  function syncBars() {
     root.style.setProperty("--bar-h", Math.ceil(bar.getBoundingClientRect().height) + "px");
     var sticky = getComputedStyle(topline).position === "sticky";
     root.style.setProperty("--top-h", sticky ? Math.ceil(topline.getBoundingClientRect().height) + "px" : "0px");
   }
-  if ("ResizeObserver" in window) { new ResizeObserver(syncBar).observe(bar); new ResizeObserver(syncBar).observe(topline); }
-  syncBar();
+  if ("ResizeObserver" in window) { new ResizeObserver(syncBars).observe(bar); new ResizeObserver(syncBars).observe(topline); }
 
   /* ---------- Запуск ---------- */
   if (a11y.on) showPanel(true);
   applyA11y();
+  syncBars();
   renderNews();
   renderNow();
-  showRoute(false);
   setInterval(renderNow, 30000);
 })();
