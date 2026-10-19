@@ -1,323 +1,344 @@
-/* Радио ВОС — прототип главной. Без библиотек. */
+/* Радио ВОС. Без библиотек. */
 (function () {
   "use strict";
 
-  /* ---------- Настройки ---------- */
-  // Поток Icecast. Пока он отдаётся только по http; когда на сервере
-  // появится https (например, через nginx), поменять здесь.
   var STREAM_BASE = "http://radiovos.ru:9000/";
-  // Для проверки через другой адрес: ?stream=http://localhost:8090/
   var override = new URLSearchParams(location.search).get("stream");
   if (override && /^https?:\/\//.test(override)) STREAM_BASE = override;
   var CONNECT_TIMEOUT = 15000;
-  var QUALITY_NAMES = {
-    "radiovos-128": "Высокое",
-    "radiovos-96": "Хорошее",
-    "radiovos-64": "Среднее",
-    "radiovos-32": "Низкое"
+  var QUALITY = { "radiovos-128": "высокое", "radiovos-96": "хорошее", "radiovos-64": "среднее", "radiovos-32": "низкое" };
+  var TITLES = {
+    "": "Радио ВОС — интернет-радио Всероссийского общества слепых",
+    "programma": "Программа передач — Радио ВОС",
+    "peredachi": "Передачи — Радио ВОС",
+    "anonsy": "Анонсы — Радио ВОС",
+    "o-radio": "О радио — Радио ВОС",
+    "kontakty": "Контакты — Радио ВОС"
   };
 
   var root = document.documentElement;
   var $ = function (id) { return document.getElementById(id); };
-
-  /* Хранилище: в приватном режиме может быть недоступно — тогда просто не запоминаем */
-  var store = {
-    get: function (key, fallback) {
-      try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; }
-    },
-    set: function (key, value) {
-      try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
-    }
-  };
-
-  /* =========================================================
-     Время и программа передач (время московское)
-     ========================================================= */
-  var schedule = (window.VOS_SCHEDULE || []).map(function (row) {
-    var hm = row[0].split(":");
-    return { time: row[0], start: +hm[0] * 60 + +hm[1], show: row[1], title: row[2] };
-  });
-  schedule.forEach(function (item, i) {
-    item.end = i + 1 < schedule.length ? schedule[i + 1].start : 24 * 60;
-  });
-
-  var mskFormat = new Intl.DateTimeFormat("ru-RU", {
-    timeZone: "Europe/Moscow", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
-  });
-  var mskDate = new Intl.DateTimeFormat("ru-RU", {
-    timeZone: "Europe/Moscow", weekday: "long", day: "numeric", month: "long"
-  });
-
-  function mskMinutes() {
-    var p = {};
-    mskFormat.formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
-    return +p.hour * 60 + +p.minute + +p.second / 60;
+  var $$ = function (sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); };
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
   }
 
-  function currentIndex(min) {
-    for (var i = schedule.length - 1; i >= 0; i--) if (schedule[i].start <= min) return i;
+  var store = {
+    get: function (k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+
+  function say(text) {
+    var box = $("sr-status");
+    box.textContent = "";
+    setTimeout(function () { box.textContent = text; }, 60);
+  }
+  var toastTimer;
+  function toast(text) {
+    var t = $("toast");
+    t.textContent = text;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 6000);
+  }
+
+  /* =========================================================
+     Время и программа (МСК)
+     ========================================================= */
+  var schedule = (window.VOS_SCHEDULE || []).map(function (r) {
+    var hm = r[0].split(":");
+    return { time: r[0], start: +hm[0] * 60 + +hm[1], show: r[1], title: r[2] };
+  });
+  schedule.forEach(function (it, i) { it.end = i + 1 < schedule.length ? schedule[i + 1].start : 1440; });
+
+  var mskParts = new Intl.DateTimeFormat("ru-RU", { timeZone: "Europe/Moscow", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  var mskDay = new Intl.DateTimeFormat("ru-RU", { timeZone: "Europe/Moscow", weekday: "long", day: "numeric", month: "long" });
+  function mskNow() {
+    var p = {};
+    mskParts.formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
+    return +p.hour * 60 + +p.minute;
+  }
+  function hhmm(m) {
+    m = m % 1440;
+    var h = Math.floor(m / 60), mm = m % 60;
+    return (h < 10 ? "0" : "") + h + ":" + (mm < 10 ? "0" : "") + mm;
+  }
+  function currentIndex(m) {
+    for (var i = schedule.length - 1; i >= 0; i--) if (schedule[i].start <= m) return i;
     return 0;
   }
 
-  function fmt(min) {
-    min = Math.round(min) % (24 * 60);
-    var h = Math.floor(min / 60), m = min % 60;
-    return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+  function slotNode(it, state) {
+    var li = el("li", "slot" + (state ? " is-" + state : ""));
+    if (state === "now") li.setAttribute("aria-current", "true");
+    var t = el("time", "slot__time", it.time);
+    var body = el("div");
+    if (state === "now") body.appendChild(el("span", "slot__now", "Сейчас"));
+    body.appendChild(el("p", "slot__show", it.show));
+    if (it.title) body.appendChild(el("p", "slot__title", it.title));
+    li.appendChild(t);
+    li.appendChild(body);
+    return li;
   }
 
-  function minutesWord(n) {
-    var a = n % 10, b = n % 100;
-    if (a === 1 && b !== 11) return "минута";
-    if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return "минуты";
-    return "минут";
-  }
-
-  var showPast = false;
-  var lastIndex = -1;
-
-  function renderSchedule(idx) {
-    var list = $("schedule-list");
-    if (!list) return;
-    list.innerHTML = "";
-    schedule.forEach(function (item, i) {
-      if (!showPast && i < idx) return;
-      var li = document.createElement("li");
-      li.className = "slot" + (i < idx ? " is-past" : "") + (i === idx ? " is-now" : "");
-      if (i === idx) li.setAttribute("aria-current", "true");
-
-      var time = document.createElement("time");
-      time.className = "slot__time";
-      time.textContent = item.time;
-
-      var body = document.createElement("div");
-      if (i === idx) {
-        var badge = document.createElement("span");
-        badge.className = "badge-now";
-        badge.textContent = "Сейчас в эфире";
-        body.appendChild(badge);
-      }
-      var show = document.createElement("p");
-      show.className = "slot__show";
-      show.textContent = item.show;
-      body.appendChild(show);
-      if (item.title) {
-        var t = document.createElement("p");
-        t.className = "slot__title";
-        t.textContent = item.title;
-        body.appendChild(t);
-      }
-      li.appendChild(time);
-      li.appendChild(body);
-      list.appendChild(li);
-    });
-  }
-
-  function updateNow() {
+  var lastIdx = -1;
+  function renderNow() {
     if (!schedule.length) return;
-    var min = mskMinutes();
-    var idx = currentIndex(min);
-    var cur = schedule[idx];
-    var next = schedule[idx + 1] || schedule[0];
+    var idx = currentIndex(mskNow());
+    if (idx === lastIdx) return;
+    lastIdx = idx;
+    var cur = schedule[idx], next = schedule[idx + 1] || schedule[0];
+    var title = cur.title || "Прямой эфир";
 
     $("now-show").textContent = cur.show;
-    $("now-title").textContent = cur.title || "Прямой эфир Радио ВОС";
-    var left = Math.max(1, Math.ceil(cur.end - min));
-    $("now-time").textContent = cur.time + "–" + fmt(cur.end) + " по Москве · осталось " + left + " " + minutesWord(left);
-    $("now-progress").style.width = Math.min(100, ((min - cur.start) / (cur.end - cur.start)) * 100) + "%";
+    $("now-title").textContent = title;
+    $("now-time").textContent = cur.time + "–" + hhmm(cur.end) + " МСК";
+    $("bar-show").textContent = cur.show;
+    $("bar-title").textContent = title;
+    $$("[data-play]").forEach(function (b) { b.setAttribute("aria-description", cur.show + ". " + title); });
 
     $("next-time").textContent = next.time;
     $("next-show").textContent = next.show;
     $("next-title").textContent = next.title;
 
-    if (idx !== lastIndex) {
-      lastIndex = idx;
-      renderSchedule(idx);
-      updateMediaSession(cur);
-    }
+    // Сегодня: текущая и пять следующих
+    var today = $("today-list");
+    today.innerHTML = "";
+    schedule.slice(idx, idx + 5).forEach(function (it, i) { today.appendChild(slotNode(it, i === 0 ? "now" : "")); });
 
-    var d = mskDate.format(new Date());
-    $("schedule-date").textContent = d.charAt(0).toUpperCase() + d.slice(1) + ". Время московское";
+    // Полная программа
+    var full = $("full-list");
+    full.innerHTML = "";
+    schedule.forEach(function (it, i) { full.appendChild(slotNode(it, i < idx ? "past" : i === idx ? "now" : "")); });
+    var d = mskDay.format(new Date());
+    $("prog-date").textContent = d.charAt(0).toUpperCase() + d.slice(1) + " · МСК";
+
+    renderShows();
+    updateMediaSession(cur);
   }
 
-  $("schedule-toggle").addEventListener("click", function () {
-    showPast = !showPast;
-    this.setAttribute("aria-expanded", String(showPast));
-    this.textContent = showPast ? "Скрыть прошедшие передачи" : "Показать прошедшие передачи";
-    renderSchedule(lastIndex);
-  });
+  /* ---------- Передачи ---------- */
+  function airTimes(name) {
+    return schedule.filter(function (it) { return it.show === name; }).map(function (it) { return it.time; });
+  }
+  function renderShows() {
+    var shows = window.VOS_SHOWS || [];
+    $$("[data-shows]").forEach(function (list) {
+      var limit = list.dataset.shows === "all" ? shows.length : +list.dataset.shows;
+      var full = list.dataset.shows === "all";
+      list.innerHTML = "";
+      shows.slice(0, limit).forEach(function (s) {
+        var li = el("li");
+        var tile = el(full ? "article" : "a", "tile");
+        tile.dataset.c = s[2];
+        if (!full) tile.href = "#/peredachi";
+        tile.appendChild(el("h3", null, s[0]));
+        if (full) tile.appendChild(el("p", null, s[1]));
+        var times = airTimes(s[0]);
+        if (times.length) tile.appendChild(el("p", "tile__when", "Сегодня в " + times.join(" и ")));
+        li.appendChild(tile);
+        list.appendChild(li);
+      });
+    });
+  }
+
+  /* ---------- Анонсы ---------- */
+  var dayMonth = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" });
+  function renderNews() {
+    var news = window.VOS_NEWS || [];
+    $$("[data-news]").forEach(function (list) {
+      var limit = list.dataset.news === "all" ? news.length : +list.dataset.news;
+      list.innerHTML = "";
+      news.slice(0, limit).forEach(function (n) {
+        var li = el("li");
+        var card = el("article", "card");
+        var meta = el("p", "card__meta");
+        var t = el("time", null, dayMonth.format(new Date(n[0] + "T12:00:00")));
+        t.setAttribute("datetime", n[0]);
+        meta.appendChild(t);
+        meta.appendChild(el("span", "card__show", n[1]));
+        card.appendChild(meta);
+        card.appendChild(el("h3", null, n[2]));
+        card.appendChild(el("p", "card__text", n[3]));
+        card.appendChild(el("p", "card__air", "В эфире " + n[4]));
+        li.appendChild(card);
+        list.appendChild(li);
+      });
+    });
+  }
 
   /* =========================================================
-     Плеер прямого эфира
+     Разделы: меню меняет правую часть, эфир не прерывается
+     ========================================================= */
+  function routeName() { return location.hash.replace(/^#\/?/, "").split("/")[0]; }
+
+  function showRoute(userAction) {
+    var name = routeName();
+    if (!(name in TITLES)) name = "";
+    $$(".view").forEach(function (v) { v.hidden = v.dataset.view !== name; });
+    $$(".menu a").forEach(function (a) {
+      if (a.dataset.route === name) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+    document.title = TITLES[name];
+    if (userAction) {
+      var view = document.querySelector('.view[data-view="' + name + '"]');
+      var h1 = view.querySelector("h1");
+      var content = $("content");
+      if (content.getBoundingClientRect().top < 0 || window.innerWidth < 960) content.scrollIntoView();
+      // Фокус на заголовок раздела: диктор сразу прочитает, куда попал человек
+      h1.focus({ preventScroll: true });
+      if (name === "programma") {
+        var now = view.querySelector(".is-now");
+        if (now) now.scrollIntoView({ block: "center" });
+      }
+    }
+  }
+  window.addEventListener("hashchange", function () { showRoute(true); });
+
+  /* =========================================================
+     Плеер
      ========================================================= */
   var audio = null;
-  var playBtn = $("play");
-  var statusEl = $("player-status");
-  var player = $("player");
+  var plays = $$("[data-play]");
+  var cover = $("player");
   var saved = store.get("vos-player", {});
-  var quality = saved.quality || "radiovos-128";
+  var quality = QUALITY[saved.quality] ? saved.quality : "radiovos-128";
   var volume = typeof saved.volume === "number" ? saved.volume : 80;
   var muted = false;
-  var connectTimer = null;
-
-  var qInput = document.querySelector('input[name="quality"][value="' + quality + '"]');
-  if (qInput) qInput.checked = true;
-
-  function setStatus(html) { statusEl.innerHTML = html; }
-
-  function setPlaying(state) {
-    // state: "idle" | "loading" | "playing"
-    playBtn.dataset.state = state;
-    playBtn.setAttribute("aria-pressed", String(state !== "idle"));
-    $("play-label").textContent = state === "idle" ? "Слушать эфир" : "Пауза";
-    player.classList.toggle("is-playing", state === "playing");
-  }
-
-  function streamUrl() { return STREAM_BASE + quality; }
-
-  // На https-странице браузер не даст играть http-поток — открываем его во вкладке
+  var state = "idle";
+  var timer = null;
   var streamBlocked = location.protocol === "https:" && STREAM_BASE.indexOf("http:") === 0;
+
+  $$('input[name="quality"]').forEach(function (i) { i.checked = i.value === quality; });
+
+  function setState(s) {
+    state = s;
+    plays.forEach(function (b) {
+      b.dataset.state = s;
+      b.setAttribute("aria-pressed", String(s !== "idle"));
+      b.querySelector("[data-play-label]").textContent = s === "idle" ? "Слушать эфир" : "Пауза";
+    });
+    cover.classList.toggle("is-playing", s === "playing");
+  }
+  function url() { return STREAM_BASE + quality; }
 
   function start() {
     if (streamBlocked) {
-      var tab = window.open(streamUrl(), "_blank");
-      if (tab) tab.opener = null;
-      var link = '<a href="' + streamUrl() + '" target="_blank" rel="noopener">открыть эфир в новой вкладке</a>';
-      setStatus(tab
-        ? "Эфир открылся в новой вкладке. Если вкладка не появилась — " + link + "."
-        : "Браузер не дал открыть вкладку автоматически — " + link + ".");
+      var tab = window.open(url(), "_blank");
+      if (tab) { tab.opener = null; say("Эфир открыт в новой вкладке"); }
+      else toast("Разрешите всплывающие окна для этого сайта");
       return;
     }
     if (!audio) {
       audio = new Audio();
       audio.preload = "none";
       audio.addEventListener("playing", function () {
-        clearTimeout(connectTimer);
-        setPlaying("playing");
-        setStatus("Эфир играет. Качество: " + QUALITY_NAMES[quality].toLowerCase() + ".");
+        clearTimeout(timer);
+        setState("playing");
+        say("Эфир играет");
       });
-      audio.addEventListener("waiting", function () {
-        if (playBtn.dataset.state !== "idle") setStatus("Подгружаем звук…");
-      });
-      audio.addEventListener("error", onError);
+      audio.addEventListener("error", fail);
     }
     applyVolume();
-    audio.src = streamUrl();
-    setPlaying("loading");
-    setStatus("Подключаемся к эфиру…");
-    clearTimeout(connectTimer);
-    connectTimer = setTimeout(onError, CONNECT_TIMEOUT);
+    audio.src = url();
+    setState("loading");
+    clearTimeout(timer);
+    timer = setTimeout(fail, CONNECT_TIMEOUT);
     var p = audio.play();
-    if (p && p.catch) p.catch(onError);
+    if (p && p.catch) p.catch(fail);
   }
-
-  function stop(message) {
-    clearTimeout(connectTimer);
+  function stop() {
+    clearTimeout(timer);
     if (audio) {
       audio.pause();
-      // Сбрасываем поток, чтобы после паузы снова слушать живой эфир, а не запись
-      audio.removeAttribute("src");
+      audio.removeAttribute("src");   // после паузы — снова живой эфир, а не запись
       audio.load();
     }
-    setPlaying("idle");
-    setStatus(message || "Эфир на паузе.");
+    setState("idle");
+  }
+  function fail() {
+    if (state === "idle") return;
+    stop();
+    toast("Не удалось подключиться к эфиру");
   }
 
-  function onError() {
-    if (playBtn.dataset.state === "idle") return;
-    stop(
-      streamBlocked
-        ? 'Браузер не пускает поток на эту страницу: эфир пока передаётся без шифрования (http). <a href="' + streamUrl() + '" target="_blank" rel="noopener">Открыть эфир в новой вкладке</a>.'
-        : "Не получилось подключиться к эфиру. Проверьте интернет и нажмите «Слушать эфир» ещё раз или выберите низкое качество."
-    );
-  }
-
-  playBtn.addEventListener("click", function () {
-    if (playBtn.dataset.state && playBtn.dataset.state !== "idle") stop();
-    else start();
-  });
-
-  document.querySelectorAll('input[name="quality"]').forEach(function (input) {
-    input.addEventListener("change", function () {
-      quality = this.value;
-      store.set("vos-player", { quality: quality, volume: volume });
-      if (playBtn.dataset.state && playBtn.dataset.state !== "idle") start();
-      else setStatus("Выбрано качество: " + QUALITY_NAMES[quality].toLowerCase() + ".");
+  plays.forEach(function (b) {
+    b.addEventListener("click", function () {
+      if (state === "idle") start();
+      else { stop(); say("Пауза"); }
     });
   });
 
-  /* Громкость */
-  var range = $("volume");
-  var muteBtn = $("mute");
-  range.value = volume;
+  $$('input[name="quality"]').forEach(function (i) {
+    i.addEventListener("change", function () {
+      quality = this.value;
+      store.set("vos-player", { quality: quality, volume: volume });
+      if (state !== "idle") start();
+    });
+  });
 
+  var range = $("volume"), muteBtn = $("mute");
+  range.value = volume;
   function applyVolume() {
-    $("volume-out").textContent = volume + "%";
     range.setAttribute("aria-valuetext", volume + " процентов");
-    if (audio) {
-      audio.volume = volume / 100;
-      audio.muted = muted;
-    }
+    if (audio) { audio.volume = volume / 100; audio.muted = muted; }
   }
   range.addEventListener("input", function () {
     volume = +this.value;
-    if (muted && volume > 0) toggleMute(false);
+    if (muted && volume > 0) setMute(false);
     applyVolume();
     store.set("vos-player", { quality: quality, volume: volume });
   });
-  function toggleMute(force) {
-    muted = typeof force === "boolean" ? force : !muted;
-    muteBtn.setAttribute("aria-pressed", String(muted));
-    muteBtn.setAttribute("aria-label", muted ? "Включить звук" : "Выключить звук");
+  function setMute(v) {
+    muted = v;
+    muteBtn.setAttribute("aria-pressed", String(v));
+    muteBtn.setAttribute("aria-label", v ? "Включить звук" : "Выключить звук");
     applyVolume();
   }
-  muteBtn.addEventListener("click", function () { toggleMute(); });
+  muteBtn.addEventListener("click", function () { setMute(!muted); });
   applyVolume();
 
-  /* Подпись на экране блокировки телефона и в системных плеерах */
   function updateMediaSession(cur) {
     if (!("mediaSession" in navigator) || !window.MediaMetadata) return;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: cur.title ? cur.show + " — " + cur.title : cur.show,
-      artist: "Радио ВОС",
-      album: "Прямой эфир"
+      artist: "Радио ВОС"
     });
     try {
       navigator.mediaSession.setActionHandler("play", start);
-      navigator.mediaSession.setActionHandler("pause", function () { stop(); });
-      navigator.mediaSession.setActionHandler("stop", function () { stop(); });
+      navigator.mediaSession.setActionHandler("pause", stop);
+      navigator.mediaSession.setActionHandler("stop", stop);
     } catch (e) {}
   }
 
   /* =========================================================
-     Тема: светлая / тёмная
+     Тема
      ========================================================= */
   var themeBtn = $("theme-toggle");
-  var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-  function effectiveTheme() {
-    return root.dataset.theme || (darkQuery.matches ? "dark" : "light");
-  }
-  function syncThemeButton() {
-    var dark = effectiveTheme() === "dark";
-    themeBtn.setAttribute("aria-pressed", String(dark));
-    themeBtn.querySelector("span").textContent = dark ? "Светлая тема" : "Тёмная тема";
+  function syncTheme() {
+    var light = root.dataset.theme === "light";
+    themeBtn.setAttribute("aria-pressed", String(light));
+    themeBtn.setAttribute("aria-label", light ? "Тёмная тема" : "Светлая тема");
     themeBtn.hidden = !!root.dataset.scheme;
   }
   themeBtn.addEventListener("click", function () {
-    root.dataset.theme = effectiveTheme() === "dark" ? "light" : "dark";
+    if (root.dataset.theme === "light") delete root.dataset.theme;
+    else root.dataset.theme = "light";
     var s = store.get("vos-a11y", {});
-    s.theme = root.dataset.theme;
+    s.theme = root.dataset.theme || "";
     store.set("vos-a11y", s);
-    syncThemeButton();
+    syncTheme();
   });
-  if (darkQuery.addEventListener) darkQuery.addEventListener("change", syncThemeButton);
 
   /* =========================================================
      Версия для слабовидящих
      ========================================================= */
-  var panel = $("a11y-panel");
-  var a11yBtn = $("a11y-toggle");
-  var DEFAULTS = { on: true, scale: 1.25, scheme: "bw", tracking: "0", leading: "1.55", font: "sans", speech: "off" };
+  var panel = $("a11y-panel"), a11yBtn = $("a11y-toggle");
+  var DEFAULTS = { on: true, scale: 1.25, scheme: "bw", tracking: "0", leading: "1.5", font: "sans", speech: "off" };
   var a11y = store.get("vos-a11y", {});
 
   function applyA11y() {
@@ -333,136 +354,100 @@
       ["--scale", "--tracking", "--leading"].forEach(function (p) { root.style.removeProperty(p); });
       a11y.speech = "off";
     }
-    ["scale", "scheme", "tracking", "leading", "font", "speech"].forEach(function (name) {
-      document.querySelectorAll('#a11y-panel input[name="' + name + '"]').forEach(function (input) {
-        input.checked = String(a11y[name]) === input.value;
-      });
+    ["scale", "scheme", "tracking", "leading", "font", "speech"].forEach(function (n) {
+      $$('#a11y-panel input[name="' + n + '"]').forEach(function (i) { i.checked = String(a11y[n]) === i.value; });
     });
-    a11yBtn.lastChild.textContent = a11y.on ? " Настройки для слабовидящих" : " Версия для слабовидящих";
-    syncThemeButton();
+    a11yBtn.setAttribute("aria-label", a11y.on ? "Настройки для слабовидящих" : "Версия для слабовидящих");
+    syncTheme();
     store.set("vos-a11y", a11y);
   }
-
-  function showPanel(show) {
-    panel.hidden = !show;
-    a11yBtn.setAttribute("aria-expanded", String(show));
+  function showPanel(v) {
+    panel.hidden = !v;
+    a11yBtn.setAttribute("aria-expanded", String(v));
   }
-
   a11yBtn.addEventListener("click", function () {
     if (!a11y.on) {
       a11y = Object.assign({}, DEFAULTS, { theme: a11y.theme });
       applyA11y();
       showPanel(true);
-      panel.querySelector('input[name="scale"]:checked').focus();
-      announce("Версия для слабовидящих включена");
+      panel.querySelector("input:checked").focus();
+      say("Версия для слабовидящих включена");
     } else {
       showPanel(panel.hidden);
     }
   });
-
   panel.addEventListener("change", function (e) {
-    var input = e.target;
-    if (!input.name) return;
-    a11y[input.name] = input.name === "scale" ? +input.value : input.value;
+    var i = e.target;
+    if (!i.name) return;
+    a11y[i.name] = i.name === "scale" ? +i.value : i.value;
     applyA11y();
-    if (input.name === "speech") {
-      if (input.value === "on") speak("Озвучка включена. Нажмите на текст или выделите его, чтобы прослушать.");
-      else if (window.speechSynthesis) speechSynthesis.cancel();
+    if (i.name === "speech") {
+      if (i.value === "on") speak("Озвучка включена");
+      else if (canSpeak) speechSynthesis.cancel();
     }
   });
-
   $("a11y-off").addEventListener("click", function () {
     a11y = { on: false, theme: a11y.theme };
-    if (window.speechSynthesis) speechSynthesis.cancel();
+    if (canSpeak) speechSynthesis.cancel();
     applyA11y();
     showPanel(false);
     a11yBtn.focus();
-    announce("Включена обычная версия сайта");
+    say("Обычная версия сайта");
   });
 
-  /* Короткие объявления для экранного диктора */
-  function announce(text) {
-    var box = $("sr-announce");
-    box.textContent = "";
-    setTimeout(function () { box.textContent = text; }, 50);
-  }
-
-  /* =========================================================
-     Озвучка текста (синтез речи браузера)
-     Только для слабовидящих без экранного диктора — по умолчанию выключена.
-     ========================================================= */
+  /* ---------- Озвучка (синтез речи браузера) ---------- */
   var canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
   if (!canSpeak) $("speech-group").hidden = true;
-
   var ruVoice = null;
-  function pickVoice() {
-    if (!canSpeak) return;
-    var voices = speechSynthesis.getVoices();
-    ruVoice = voices.filter(function (v) { return /^ru/i.test(v.lang); })[0] || null;
-  }
-  if (canSpeak) {
-    pickVoice();
-    speechSynthesis.onvoiceschanged = pickVoice;
-  }
+  function pickVoice() { ruVoice = speechSynthesis.getVoices().filter(function (v) { return /^ru/i.test(v.lang); })[0] || null; }
+  if (canSpeak) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 
-  var speakingEl = null;
-  function speak(text, el) {
+  var speaking = null;
+  function speak(text, node) {
     if (!canSpeak || !text) return;
     speechSynthesis.cancel();
-    if (speakingEl) speakingEl.classList.remove("is-speaking");
+    if (speaking) speaking.classList.remove("is-speaking");
     var u = new SpeechSynthesisUtterance(text.replace(/\s+/g, " ").trim());
     u.lang = "ru-RU";
     if (ruVoice) u.voice = ruVoice;
-    u.rate = 1;
-    if (el) {
-      speakingEl = el;
-      el.classList.add("is-speaking");
-      u.onend = u.onerror = function () { el.classList.remove("is-speaking"); };
+    if (node) {
+      speaking = node;
+      node.classList.add("is-speaking");
+      u.onend = u.onerror = function () { node.classList.remove("is-speaking"); };
     }
     speechSynthesis.speak(u);
   }
-
-  var READABLE = "a, button, label, legend, h1, h2, h3, p, li, dt, dd, time, output";
-  function textOf(el) {
-    return el.getAttribute("aria-label") || el.innerText || el.textContent || "";
+  var READABLE = "a, button, label, legend, h1, h2, h3, p, li, dt, dd, time, address";
+  function textOf(n) {
+    var t = n.getAttribute("aria-label") || n.innerText || "";
+    var d = n.getAttribute("aria-description");
+    return d ? t + ". " + d : t;
   }
   function speechOn() { return a11y.on && a11y.speech === "on"; }
-
   document.addEventListener("click", function (e) {
-    if (!speechOn()) return;
-    var sel = window.getSelection && String(window.getSelection());
-    if (sel && sel.trim().length > 1) return; // выделенный текст читаем по mouseup
-    var el = e.target.closest(READABLE);
-    if (el) speak(textOf(el), el);
+    if (!speechOn() || String(window.getSelection()).trim().length > 1) return;
+    var n = e.target.closest(READABLE);
+    if (n) speak(textOf(n), n);
   });
   document.addEventListener("focusin", function (e) {
-    if (!speechOn() || e.target.matches("body")) return;
-    var el = e.target.closest("label") || e.target;
-    speak(textOf(el), el);
+    if (!speechOn() || e.target === document.body) return;
+    var n = e.target.closest("label") || e.target;
+    speak(textOf(n), n);
   });
   document.addEventListener("mouseup", function () {
     if (!speechOn()) return;
-    var sel = String(window.getSelection());
-    if (sel.trim().length > 1) speak(sel);
+    var s = String(window.getSelection()).trim();
+    if (s.length > 1) speak(s);
   });
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && canSpeak) speechSynthesis.cancel();
   });
 
-  /* =========================================================
-     Меню на узких экранах
-     ========================================================= */
-  var navToggle = document.querySelector(".nav-toggle");
-  var nav = $("nav");
-  navToggle.addEventListener("click", function () {
-    var open = nav.dataset.open !== "true";
-    nav.dataset.open = String(open);
-    this.setAttribute("aria-expanded", String(open));
-  });
-
   /* ---------- Запуск ---------- */
   if (a11y.on) showPanel(true);
   applyA11y();
-  updateNow();
-  setInterval(updateNow, 30 * 1000);
+  renderNews();
+  renderNow();
+  showRoute(false);
+  setInterval(renderNow, 30000);
 })();
