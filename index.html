@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#ffffff">
   <link rel="preload" href="assets/fonts/golos-text-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/css/main.css?v=13">
+  <link rel="stylesheet" href="assets/css/main.css?v=15">
   <script>
     try {
       var s = JSON.parse(localStorage.getItem("vos-a11y") || "{}"), r = document.documentElement;
@@ -18,8 +18,8 @@
         r.style.setProperty("--scale", s.scale || 1.25);
         if (s.tracking) r.style.setProperty("--tracking", s.tracking);
         if (s.leading) r.style.setProperty("--leading", s.leading);
-        if (s.simple === "on") r.dataset.simple = "";
       }
+      if (s.simple === "on") r.dataset.simple = "";
     } catch (e) {}
   </script>
 </head>
@@ -30,10 +30,16 @@
 
   <!-- ============ Верхняя строка: жёлтая полоса флага ============ -->
   <header class="topline">
+    <div class="topline__group">
     <button class="topline__btn" type="button" id="a11y-toggle" aria-expanded="false" aria-controls="a11y-panel">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg>
       <span data-a11y-label>Версия для слабовидящих</span>
     </button>
+    <button class="topline__btn" type="button" id="big-toggle" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
+      <span>Крупный интерфейс</span>
+    </button>
+    </div>
     <a class="topline__phone" href="tel:88001000015">Звонок в эфир: 8-800-100-00-15</a>
   </header>
 
@@ -91,7 +97,7 @@
         </div>
       </fieldset>
       <fieldset class="a11y-group">
-        <legend>Одна кнопка</legend>
+        <legend>Крупный интерфейс</legend>
         <div class="a11y-options">
           <label class="a11y-opt"><input type="radio" name="simple" value="off"><span>Выкл.</span></label>
           <label class="a11y-opt"><input type="radio" name="simple" value="on"><span>Вкл.</span></label>
@@ -358,20 +364,45 @@
     </div>
   </div>
 
-  <!-- ============ Режим одной кнопки ============ -->
-  <section class="simple" aria-label="Режим одной кнопки">
-    <button class="play play--huge" type="button" data-play>
-      <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/></svg>
-      <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1.4"/><rect x="14" y="4.5" width="4.5" height="15" rx="1.4"/></svg>
-      <span class="visually-hidden" data-play-label>Слушать эфир</span>
-    </button>
-    <p class="simple__label" aria-hidden="true" data-simple-label>Слушать</p>
-    <div class="simple__now">
-      <p class="simple__show" id="simple-show">Радио ВОС</p>
-      <p class="simple__title" id="simple-title">Прямой эфир</p>
+  <!-- ============ Крупный интерфейс ============ -->
+  <main class="big" aria-label="Крупный интерфейс">
+    <h1 class="visually-hidden">Радио ВОС — крупный интерфейс</h1>
+    <div class="big__home" data-big-view="home">
+      <button class="big-tile big-tile--play" type="button" data-play>
+        <span class="big-tile__icon" aria-hidden="true"><svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/></svg><svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1.4"/><rect x="14" y="4.5" width="4.5" height="15" rx="1.4"/></svg></span>
+        <span class="big-tile__label" aria-hidden="true" data-simple-label>Слушать</span>
+        <span class="big-tile__now" aria-hidden="true"><b id="simple-show">Радио ВОС</b><span id="simple-title">Прямой эфир</span></span>
+        <span class="visually-hidden" data-play-label>Слушать эфир</span>
+      </button>
+      <button class="big-tile big-tile--prog" type="button" data-big-go="prog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+        <span class="big-tile__label">Программа</span>
+      </button>
+      <a class="big-tile big-tile--call" href="tel:88001000015">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>
+        <span class="big-tile__label">Позвонить в эфир</span>
+        <span class="big-tile__sub">8-800-100-00-15</span>
+      </a>
+      <button class="big-tile big-tile--vol" type="button" data-vol="-10">
+        <span class="big-tile__sign" aria-hidden="true">−</span>
+        <span class="big-tile__label">Тише</span>
+      </button>
+      <button class="big-tile big-tile--vol" type="button" data-vol="10">
+        <span class="big-tile__sign" aria-hidden="true">+</span>
+        <span class="big-tile__label">Громче</span>
+      </button>
     </div>
-    <button class="btn" type="button" id="simple-off">Обычный вид</button>
-  </section>
+
+    <div class="big__prog" data-big-view="prog" hidden>
+      <button class="big-back" type="button" data-big-go="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Назад
+      </button>
+      <h2 class="big__title" id="big-prog-title" tabindex="-1">Программа на сегодня</h2>
+      <ol class="big-slots" id="big-list"></ol>
+    </div>
+
+    <button class="btn big-exit" type="button" id="simple-off">Обычный сайт</button>
+  </main>
 
   <!-- ============ Горячие клавиши ============ -->
   <dialog class="keys-dialog" id="keys" aria-labelledby="keys-title">
@@ -389,7 +420,7 @@
   <div class="visually-hidden" id="sr-status" role="status" aria-live="polite"></div>
   <div class="toast" id="toast" role="alert" hidden></div>
 
-  <script src="assets/js/data.js?v=13"></script>
-  <script src="assets/js/main.js?v=13"></script>
+  <script src="assets/js/data.js?v=15"></script>
+  <script src="assets/js/main.js?v=15"></script>
 </body>
 </html>

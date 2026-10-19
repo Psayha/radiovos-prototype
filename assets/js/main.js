@@ -118,6 +118,20 @@
     var d = mskDay.format(new Date());
     $("prog-date").textContent = d.charAt(0).toUpperCase() + d.slice(1) + " · МСК";
 
+    var big = $("big-list");
+    big.innerHTML = "";
+    schedule.slice(idx).forEach(function (it, i) {
+      var li = el("li", i === 0 ? "is-now" : "");
+      if (i === 0) li.setAttribute("aria-current", "true");
+      li.appendChild(el("time", null, it.time));
+      var b = el("div");
+      if (i === 0) b.appendChild(el("span", "slot__now", "Сейчас"));
+      b.appendChild(el("b", null, it.show));
+      if (it.title) b.appendChild(el("small", null, it.title));
+      li.appendChild(b);
+      big.appendChild(li);
+    });
+
     renderShows();
     updateMediaSession(cur);
   }
@@ -332,7 +346,7 @@
   /* =========================================================
      Версия для слабовидящих
      ========================================================= */
-  var panel = $("a11y-panel"), a11yBtn = $("a11y-toggle");
+  var panel = $("a11y-panel"), a11yBtn = $("a11y-toggle"), bigBtn = $("big-toggle");
   var DEFAULTS = { on: true, scale: 1.25, scheme: "bw", tracking: "0", leading: "1.5", font: "sans", speech: "off", simple: "off" };
   var a11y = store.get("vos-a11y", {});
 
@@ -343,15 +357,15 @@
       root.style.setProperty("--scale", a11y.scale);
       root.style.setProperty("--tracking", a11y.tracking);
       root.style.setProperty("--leading", a11y.leading);
-      if (a11y.simple === "on") root.dataset.simple = "";
-      else delete root.dataset.simple;
     } else {
-      delete root.dataset.simple;
       delete root.dataset.scheme;
       delete root.dataset.font;
       ["--scale", "--tracking", "--leading"].forEach(function (p) { root.style.removeProperty(p); });
       a11y.speech = "off";
     }
+    if (a11y.simple === "on") root.dataset.simple = "";
+    else delete root.dataset.simple;
+    bigBtn.setAttribute("aria-pressed", String(a11y.simple === "on"));
     ["scale", "scheme", "tracking", "leading", "font", "speech", "simple"].forEach(function (n) {
       $$('#a11y-panel input[name="' + n + '"]').forEach(function (i) { i.checked = String(a11y[n]) === i.value; });
     });
@@ -378,10 +392,7 @@
     if (!i.name) return;
     a11y[i.name] = i.name === "scale" ? +i.value : i.value;
     applyA11y();
-    if (i.name === "simple" && i.value === "on") {
-      document.querySelector(".play--huge").focus();
-      say("Режим одной кнопки");
-    }
+    if (i.name === "simple") setBig(i.value === "on");
     if (i.name === "speech") {
       if (i.value === "on") speak("Озвучка включена");
       else if (canSpeak) speechSynthesis.cancel();
@@ -444,11 +455,33 @@
     if (e.key === "Escape" && canSpeak) speechSynthesis.cancel();
   });
 
-  $("simple-off").addEventListener("click", function () {
-    a11y.simple = "off";
+  /* =========================================================
+     Крупный интерфейс
+     ========================================================= */
+  function bigView(name) {
+    $$("[data-big-view]").forEach(function (v) { v.hidden = v.dataset.bigView !== name; });
+    if (name === "prog") {
+      $("big-prog-title").focus();
+      var now = $("big-list").querySelector(".is-now");
+      if (now) now.scrollIntoView({ block: "center" });
+    } else {
+      document.querySelector(".big-tile--play").focus();
+    }
+  }
+  function setBig(on) {
+    a11y.simple = on ? "on" : "off";
     applyA11y();
-    document.querySelector(".play--big").focus();
-    say("Обычный вид");
+    window.scrollTo(0, 0);
+    if (on) { bigView("home"); say("Крупный интерфейс"); }
+    else { document.querySelector(".play--big").focus(); say("Обычный сайт"); }
+  }
+  bigBtn.addEventListener("click", function () { setBig(a11y.simple !== "on"); });
+  $("simple-off").addEventListener("click", function () { setBig(false); });
+  $$("[data-big-go]").forEach(function (b) {
+    b.addEventListener("click", function () { bigView(b.dataset.bigGo); });
+  });
+  $$("[data-vol]").forEach(function (b) {
+    b.addEventListener("click", function () { setVolume(volume + +b.dataset.vol); });
   });
 
   /* =========================================================
@@ -486,8 +519,13 @@
 
   /* Высота нижнего плеера растёт с размером шрифта — отступы считаем по факту */
   var bar = document.querySelector(".bar");
-  function syncBar() { root.style.setProperty("--bar-h", Math.ceil(bar.getBoundingClientRect().height) + "px"); }
-  if ("ResizeObserver" in window) new ResizeObserver(syncBar).observe(bar);
+  var topline = document.querySelector(".topline");
+  function syncBar() {
+    root.style.setProperty("--bar-h", Math.ceil(bar.getBoundingClientRect().height) + "px");
+    var sticky = getComputedStyle(topline).position === "sticky";
+    root.style.setProperty("--top-h", sticky ? Math.ceil(topline.getBoundingClientRect().height) + "px" : "0px");
+  }
+  if ("ResizeObserver" in window) { new ResizeObserver(syncBar).observe(bar); new ResizeObserver(syncBar).observe(topline); }
   syncBar();
 
   /* ---------- Запуск ---------- */
