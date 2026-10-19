@@ -243,8 +243,17 @@
   }
 
   /* ---------- Меню: переходы по разделам главной ---------- */
-  $$("[data-anchor]").forEach(function (a) {
+  var menuLinks = $$(".menu a");
+  function markMenu(link) {
+    menuLinks.forEach(function (a) {
+      if (a === link) a.setAttribute("aria-current", a.hasAttribute("data-anchor") ? "location" : "page");
+      else a.removeAttribute("aria-current");
+    });
+  }
+  menuLinks.forEach(function (a) {
     a.addEventListener("click", function () {
+      markMenu(a);
+      if (!a.hasAttribute("data-anchor")) return;
       var target = document.querySelector(a.getAttribute("href"));
       if (target) setTimeout(function () { target.focus({ preventScroll: true }); }, 0);
     });
@@ -544,6 +553,7 @@
   if ("ResizeObserver" in window) { new ResizeObserver(syncBars).observe(bar); new ResizeObserver(syncBars).observe(topline); }
 
   /* ---------- Запуск ---------- */
+  if (document.visibilityState === "visible") root.classList.add("anim");
   if (a11y.on) showPanel(true);
   applyA11y();
   syncBars();

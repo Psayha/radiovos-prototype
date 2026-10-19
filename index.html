@@ -23,7 +23,7 @@
   <link rel="preload" href="assets/fonts/golos-text-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/img/og-icon.png">
-  <link rel="stylesheet" href="assets/css/main.css?v=25">
+  <link rel="stylesheet" href="assets/css/main.css?v=27">
   <script>
     try {
       var s = JSON.parse(localStorage.getItem("vos-a11y") || "{}"), r = document.documentElement;
@@ -45,6 +45,7 @@
 
   <!-- ============ Шапка — жёлтая полоса флага ============ -->
   <header class="topline">
+    <h1 class="visually-hidden">Радио ВОС — интернет-радио Всероссийского общества слепых</h1>
     <button class="topline__btn" type="button" id="a11y-toggle" aria-expanded="false" aria-controls="a11y-panel">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg>
       <span data-a11y-label><span class="topline__long">Версия для слабовидящих</span><span class="topline__short">Для слабовидящих</span></span>
@@ -183,7 +184,6 @@
     <!-- ============ Справа: модули ============ -->
     <div class="content">
     <main id="content" tabindex="-1">
-      <h1 class="visually-hidden">Радио ВОС — интернет-радио Всероссийского общества слепых</h1>
 
       <div class="home">
         <div class="stack">
@@ -204,7 +204,7 @@
             <h2>Радио ВОС в телефоне</h2>
             <p>Эфир и архив программ в приложении для Android.</p>
             <a class="btn btn--dark" href="https://radiovos.ru/download/radiovos.apk" download>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>Скачать приложение</a>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>Скачать приложение <span class="btn__note">(APK)</span></a>
           </section>
         </div>
 
@@ -218,8 +218,8 @@
           </section>
 
           <section class="mod mod--about" id="o-radio" tabindex="-1">
-            <h2>15 лет в эфире</h2>
-            <p>Некоммерческая радиостанция Всероссийского общества слепых: события ВОС, прямые трансляции фестивалей, спорт с тифлокомментарием, аудиокниги и музыка.</p>
+            <h2>О радио</h2>
+            <p>15 лет в эфире. Некоммерческая радиостанция Всероссийского общества слепых: события ВОС, прямые трансляции фестивалей, спорт с тифлокомментарием, аудиокниги и музыка.</p>
           </section>
         </div>
 
@@ -335,7 +335,7 @@
   <div class="visually-hidden" id="sr-status" role="status" aria-live="polite"></div>
   <div class="toast" id="toast" role="alert" hidden></div>
 
-  <script src="assets/js/data.js?v=25"></script>
-  <script src="assets/js/main.js?v=25"></script>
+  <script src="assets/js/data.js?v=27"></script>
+  <script src="assets/js/main.js?v=27"></script>
 </body>
 </html>
