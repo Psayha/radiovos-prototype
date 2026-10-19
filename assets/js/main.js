@@ -174,7 +174,15 @@
 
   function streamUrl() { return STREAM_BASE + quality; }
 
+  // На https-странице браузер не даст играть http-поток — открываем его во вкладке
+  var streamBlocked = location.protocol === "https:" && STREAM_BASE.indexOf("http:") === 0;
+
   function start() {
+    if (streamBlocked) {
+      window.open(streamUrl(), "_blank", "noopener");
+      setStatus("Эфир открылся в новой вкладке. На этой странице звук заработает, когда поток радио перейдёт на защищённое соединение (https).");
+      return;
+    }
     if (!audio) {
       audio = new Audio();
       audio.preload = "none";
@@ -212,9 +220,8 @@
 
   function onError() {
     if (playBtn.dataset.state === "idle") return;
-    var blocked = location.protocol === "https:" && STREAM_BASE.indexOf("http:") === 0;
     stop(
-      blocked
+      streamBlocked
         ? 'Браузер не пускает поток на эту страницу: эфир пока передаётся без шифрования (http). <a href="' + streamUrl() + '" target="_blank" rel="noopener">Открыть эфир в новой вкладке</a>.'
         : "Не получилось подключиться к эфиру. Проверьте интернет и нажмите «Слушать эфир» ещё раз или выберите низкое качество."
     );
