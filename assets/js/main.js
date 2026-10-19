@@ -179,8 +179,12 @@
 
   function start() {
     if (streamBlocked) {
-      window.open(streamUrl(), "_blank", "noopener");
-      setStatus("Эфир открылся в новой вкладке. На этой странице звук заработает, когда поток радио перейдёт на защищённое соединение (https).");
+      var tab = window.open(streamUrl(), "_blank");
+      if (tab) tab.opener = null;
+      var link = '<a href="' + streamUrl() + '" target="_blank" rel="noopener">открыть эфир в новой вкладке</a>';
+      setStatus(tab
+        ? "Эфир открылся в новой вкладке. Если вкладка не появилась — " + link + "."
+        : "Браузер не дал открыть вкладку автоматически — " + link + ".");
       return;
     }
     if (!audio) {
