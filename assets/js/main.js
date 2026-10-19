@@ -316,25 +316,6 @@
   }
 
   /* =========================================================
-     Тема
-     ========================================================= */
-  var themeBtn = $("theme-toggle");
-  function syncTheme() {
-    var light = root.dataset.theme === "light";
-    themeBtn.setAttribute("aria-pressed", String(light));
-    themeBtn.setAttribute("aria-label", light ? "Тёмная тема" : "Светлая тема");
-    themeBtn.hidden = !!root.dataset.scheme;
-  }
-  themeBtn.addEventListener("click", function () {
-    if (root.dataset.theme === "light") delete root.dataset.theme;
-    else root.dataset.theme = "light";
-    var s = store.get("vos-a11y", {});
-    s.theme = root.dataset.theme || "";
-    store.set("vos-a11y", s);
-    syncTheme();
-  });
-
-  /* =========================================================
      Версия для слабовидящих
      ========================================================= */
   var panel = $("a11y-panel"), a11yBtn = $("a11y-toggle");
@@ -358,7 +339,6 @@
       $$('#a11y-panel input[name="' + n + '"]').forEach(function (i) { i.checked = String(a11y[n]) === i.value; });
     });
     a11yBtn.setAttribute("aria-label", a11y.on ? "Настройки для слабовидящих" : "Версия для слабовидящих");
-    syncTheme();
     store.set("vos-a11y", a11y);
   }
   function showPanel(v) {
@@ -367,7 +347,7 @@
   }
   a11yBtn.addEventListener("click", function () {
     if (!a11y.on) {
-      a11y = Object.assign({}, DEFAULTS, { theme: a11y.theme });
+      a11y = Object.assign({}, DEFAULTS);
       applyA11y();
       showPanel(true);
       panel.querySelector("input:checked").focus();
@@ -387,7 +367,7 @@
     }
   });
   $("a11y-off").addEventListener("click", function () {
-    a11y = { on: false, theme: a11y.theme };
+    a11y = { on: false };
     if (canSpeak) speechSynthesis.cancel();
     applyA11y();
     showPanel(false);

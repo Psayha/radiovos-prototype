@@ -5,14 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Радио ВОС — интернет-радио Всероссийского общества слепых</title>
   <meta name="description" content="Прямой эфир, программа передач и анонсы Радио ВОС — официальной интернет-радиостанции Всероссийского общества слепых.">
-  <meta name="theme-color" content="#0b0f0d">
+  <meta name="theme-color" content="#ffffff">
   <link rel="preload" href="assets/fonts/golos-text-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/css/main.css?v=10">
+  <link rel="stylesheet" href="assets/css/main.css?v=11">
   <script>
     try {
       var s = JSON.parse(localStorage.getItem("vos-a11y") || "{}"), r = document.documentElement;
-      if (s.theme) r.dataset.theme = s.theme;
       if (s.on) {
         if (s.scheme) r.dataset.scheme = s.scheme;
         if (s.font) r.dataset.font = s.font;
@@ -95,9 +94,6 @@
           <span class="logo__text"><b>Радио ВОС</b><small>Для тех, кто умеет слушать</small></span>
         </a>
         <div class="side__tools">
-        <button class="icon-btn" type="button" id="theme-toggle" aria-pressed="false" aria-label="Светлая тема">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-        </button>
         <button class="icon-btn icon-btn--accent" type="button" id="a11y-toggle" aria-expanded="false" aria-controls="a11y-panel" aria-label="Версия для слабовидящих">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg>
         </button>
@@ -340,7 +336,7 @@
   <div class="visually-hidden" id="sr-status" role="status" aria-live="polite"></div>
   <div class="toast" id="toast" role="alert" hidden></div>
 
-  <script src="assets/js/data.js?v=10"></script>
-  <script src="assets/js/main.js?v=10"></script>
+  <script src="assets/js/data.js?v=11"></script>
+  <script src="assets/js/main.js?v=11"></script>
 </body>
 </html>
