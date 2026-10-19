@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Радио ВОС — интернет-радио Всероссийского общества слепых</title>
+  <meta name="description" content="Прямой эфир, программа передач и анонсы Радио ВОС — официальной интернет-радиостанции Всероссийского общества слепых.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="preload" href="assets/fonts/golos-text-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/main.css?v=13">
+  <script>
+    try {
+      var s = JSON.parse(localStorage.getItem("vos-a11y") || "{}"), r = document.documentElement;
+      if (s.on) {
+        if (s.scheme) r.dataset.scheme = s.scheme;
+        if (s.font) r.dataset.font = s.font;
+        r.style.setProperty("--scale", s.scale || 1.25);
+        if (s.tracking) r.style.setProperty("--tracking", s.tracking);
+        if (s.leading) r.style.setProperty("--leading", s.leading);
+        if (s.simple === "on") r.dataset.simple = "";
+      }
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#player">К плееру</a>
+  <a class="skip-link" href="#content">К содержанию</a>
+  <a class="skip-link" href="#keys" data-keys>Горячие клавиши</a>
+
+  <!-- ============ Верхняя строка: жёлтая полоса флага ============ -->
+  <header class="topline">
+    <button class="topline__btn" type="button" id="a11y-toggle" aria-expanded="false" aria-controls="a11y-panel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/></svg>
+      <span data-a11y-label>Версия для слабовидящих</span>
+    </button>
+    <a class="topline__phone" href="tel:88001000015">Звонок в эфир: 8-800-100-00-15</a>
+  </header>
+
+  <!-- ============ Версия для слабовидящих ============ -->
+  <section class="a11y-panel" id="a11y-panel" aria-label="Настройки для слабовидящих" hidden>
+    <div class="a11y-panel__inner">
+      <fieldset class="a11y-group">
+        <legend>Размер шрифта</legend>
+        <div class="a11y-options">
+          <label class="a11y-opt"><input type="radio" name="scale" value="1" aria-label="Обычный размер шрифта"><span>А</span></label>
+          <label class="a11y-opt"><input type="radio" name="scale" value="1.25" aria-label="Крупный шрифт"><span style="font-size:1.2rem">А+</span></label>
+          <label class="a11y-opt"><input type="radio" name="scale" value="1.5" aria-label="Очень крупный шрифт"><span style="font-size:1.4rem">А++</span></label>
+          <label class="a11y-opt"><input type="radio" name="scale" value="1.8" aria-label="Максимальный шрифт"><span style="font-size:1.6rem">А+++</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="a11y-group">
+        <legend>Цвета</legend>
+        <div class="a11y-options">
+          <label class="a11y-opt"><input type="radio" name="scheme" value="bw" aria-label="Чёрным по белому"><span class="swatch-bw" aria-hidden="true">Ц</span></label>
+          <label class="a11y-opt"><input type="radio" name="scheme" value="wb" aria-label="Белым по чёрному"><span class="swatch-wb" aria-hidden="true">Ц</span></label>
+          <label class="a11y-opt"><input type="radio" name="scheme" value="blue" aria-label="Тёмно-синим по голубому"><span class="swatch-blue" aria-hidden="true">Ц</span></label>
+          <label class="a11y-opt"><input type="radio" name="scheme" value="beige" aria-label="Коричневым по бежевому"><span class="swatch-beige" aria-hidden="true">Ц</span></label>
+          <label class="a11y-opt"><input type="radio" name="scheme" value="brown" aria-label="Зелёным по тёмно-коричневому"><span class="swatch-brown" aria-hidden="true">Ц</span></label>
+          <label class="a11y-opt"><input type="radio" name="scheme" value="sun" aria-label="Тёмным по приглушённому жёлтому, меньше бликов"><span class="swatch-sun" aria-hidden="true">Ц</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="a11y-group">
+        <legend>Между буквами</legend>
+        <div class="a11y-options">
+          <label class="a11y-opt"><input type="radio" name="tracking" value="0"><span>Обычно</span></label>
+          <label class="a11y-opt"><input type="radio" name="tracking" value="0.05em"><span>Шире</span></label>
+          <label class="a11y-opt"><input type="radio" name="tracking" value="0.12em"><span>Широко</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="a11y-group">
+        <legend>Между строками</legend>
+        <div class="a11y-options">
+          <label class="a11y-opt"><input type="radio" name="leading" value="1.5"><span>Обычно</span></label>
+          <label class="a11y-opt"><input type="radio" name="leading" value="1.8"><span>Шире</span></label>
+          <label class="a11y-opt"><input type="radio" name="leading" value="2.1"><span>Широко</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="a11y-group">
+        <legend>Шрифт</legend>
+        <div class="a11y-options">
+          <label class="a11y-opt"><input type="radio" name="font" value="sans"><span>Без засечек</span></label>
+          <label class="a11y-opt"><input type="radio" name="font" value="serif"><span style="font-family:var(--font-serif)">С засечками</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="a11y-group" id="speech-group">
+        <legend>Озвучка</legend>
+        <div class="a11y-options">
+          <label class="a11y-opt"><input type="radio" name="speech" value="off"><span>Выкл.</span></label>
+          <label class="a11y-opt"><input type="radio" name="speech" value="on"><span>Вкл.</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="a11y-group">
+        <legend>Одна кнопка</legend>
+        <div class="a11y-options">
+          <label class="a11y-opt"><input type="radio" name="simple" value="off"><span>Выкл.</span></label>
+          <label class="a11y-opt"><input type="radio" name="simple" value="on"><span>Вкл.</span></label>
+        </div>
+      </fieldset>
+      <div class="a11y-group a11y-group--end">
+        <button class="btn" type="button" data-keys>Горячие клавиши</button>
+        <button class="btn" type="button" id="a11y-off">Обычная версия</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="app">
+   <div class="layout">
+    <!-- ============ Левая колонка: эфир и меню ============ -->
+    <aside class="side" aria-label="Эфир и разделы">
+      <div class="side__top">
+        <a class="logo" href="#/" aria-label="Радио ВОС, на главную">
+          <img src="assets/img/favicon.svg" alt="" width="40" height="40">
+          <span class="logo__text"><b>Радио ВОС</b><small>Для тех, кто умеет слушать</small></span>
+        </a>
+      </div>
+
+      <section class="onair" id="player" aria-labelledby="onair-title" tabindex="-1">
+        <h2 class="visually-hidden" id="onair-title">Прямой эфир</h2>
+        <div class="cover" id="cover">
+          <svg class="cover__dots" viewBox="0 0 148 76" aria-hidden="true">
+            <g><circle cx="4" cy="4" r="4" style="--i:0"/><circle cx="4" cy="16" r="4" style="--i:1"/><circle cx="4" cy="28" r="4" style="--i:2"/><circle cx="16" cy="4" r="1.4" class="off"/><circle cx="16" cy="16" r="4" style="--i:3"/><circle cx="16" cy="28" r="1.4" class="off"/><circle cx="36" cy="4" r="4" style="--i:4"/><circle cx="36" cy="16" r="1.4" class="off"/><circle cx="36" cy="28" r="1.4" class="off"/><circle cx="48" cy="4" r="1.4" class="off"/><circle cx="48" cy="16" r="1.4" class="off"/><circle cx="48" cy="28" r="1.4" class="off"/><circle cx="68" cy="4" r="4" style="--i:5"/><circle cx="68" cy="16" r="1.4" class="off"/><circle cx="68" cy="28" r="1.4" class="off"/><circle cx="80" cy="4" r="4" style="--i:6"/><circle cx="80" cy="16" r="4" style="--i:7"/><circle cx="80" cy="28" r="1.4" class="off"/><circle cx="100" cy="4" r="1.4" class="off"/><circle cx="100" cy="16" r="4" style="--i:8"/><circle cx="100" cy="28" r="1.4" class="off"/><circle cx="112" cy="4" r="4" style="--i:9"/><circle cx="112" cy="16" r="1.4" class="off"/><circle cx="112" cy="28" r="1.4" class="off"/><circle cx="132" cy="4" r="4" style="--i:10"/><circle cx="132" cy="16" r="1.4" class="off"/><circle cx="132" cy="28" r="4" style="--i:11"/><circle cx="144" cy="4" r="1.4" class="off"/><circle cx="144" cy="16" r="4" style="--i:12"/><circle cx="144" cy="28" r="1.4" class="off"/></g>
+            <g transform="translate(0 44)"><circle cx="4" cy="4" r="1.4" class="off"/><circle cx="4" cy="16" r="4" style="--i:13"/><circle cx="4" cy="28" r="1.4" class="off"/><circle cx="16" cy="4" r="4" style="--i:14"/><circle cx="16" cy="16" r="4" style="--i:15"/><circle cx="16" cy="28" r="4" style="--i:16"/><circle cx="36" cy="4" r="4" style="--i:17"/><circle cx="36" cy="16" r="1.4" class="off"/><circle cx="36" cy="28" r="4" style="--i:18"/><circle cx="48" cy="4" r="1.4" class="off"/><circle cx="48" cy="16" r="4" style="--i:19"/><circle cx="48" cy="28" r="1.4" class="off"/><circle cx="68" cy="4" r="1.4" class="off"/><circle cx="68" cy="16" r="4" style="--i:20"/><circle cx="68" cy="28" r="4" style="--i:21"/><circle cx="80" cy="4" r="4" style="--i:22"/><circle cx="80" cy="16" r="1.4" class="off"/><circle cx="80" cy="28" r="1.4" class="off"/></g>
+          </svg>
+          <button class="play play--big" type="button" data-play>
+            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/></svg>
+            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1.4"/><rect x="14" y="4.5" width="4.5" height="15" rx="1.4"/></svg>
+            <span class="visually-hidden" data-play-label>Слушать эфир</span>
+          </button>
+        </div>
+
+        <div class="now">
+          <p class="now__show" id="now-show">Радио ВОС</p>
+          <p class="now__title" id="now-title">Прямой эфир</p>
+          <p class="now__time"><time id="now-time"></time></p>
+        </div>
+
+        <fieldset class="quality">
+          <legend>Качество звука</legend>
+          <div class="segmented">
+            <label><input type="radio" name="quality" value="radiovos-128" checked><span>Высокое</span></label>
+            <label><input type="radio" name="quality" value="radiovos-96"><span>Хорошее</span></label>
+            <label><input type="radio" name="quality" value="radiovos-64"><span>Среднее</span></label>
+            <label><input type="radio" name="quality" value="radiovos-32"><span>Низкое</span></label>
+          </div>
+        </fieldset>
+      </section>
+
+      <nav class="menu" aria-label="Разделы сайта">
+        <ul>
+          <li><a href="#/" data-route="">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 19a10 10 0 0 1 0-14M19 5a10 10 0 0 1 0 14"/></svg>Эфир</a></li>
+          <li><a href="#/programma" data-route="programma">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Программа</a></li>
+          <li><a href="#/peredachi" data-route="peredachi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>Передачи</a></li>
+          <li><a href="#/anonsy" data-route="anonsy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10v4h3l7 4V6L7 10H4zM18 9a4 4 0 0 1 0 6"/></svg>Анонсы</a></li>
+          <li><a href="#/o-radio" data-route="o-radio">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>О радио</a></li>
+          <li><a href="#/kontakty" data-route="kontakty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>Контакты</a></li>
+        </ul>
+      </nav>
+
+    </aside>
+
+    <!-- ============ Правая часть: модули ============ -->
+    <div class="content">
+    <main id="content" tabindex="-1">
+
+      <!-- Эфир -->
+      <section class="view" data-view="" aria-labelledby="v-home">
+        <h1 class="visually-hidden" id="v-home" tabindex="-1">Радио ВОС — интернет-радио Всероссийского общества слепых</h1>
+        <div class="grid">
+          <section class="mod mod--next">
+            <h2 id="m-next">Далее</h2>
+            <p class="next__time"><time id="next-time"></time></p>
+            <p class="next__show" id="next-show"></p>
+            <p class="next__title" id="next-title"></p>
+          </section>
+
+          <section class="mod mod--call">
+            <h2 id="m-call">Звонок в эфир</h2>
+            <a class="call__phone" href="tel:88001000015">8-800-100-00-15</a>
+            <p>Бесплатно по России</p>
+            <a class="call__wa" href="https://wa.me/79037072671">WhatsApp и СМС: <span class="nw">+7 903 707-26-71</span></a>
+          </section>
+
+          <section class="mod mod--today">
+            <div class="mod__head">
+              <h2 id="m-today">Сегодня в эфире</h2>
+              <a class="more" href="#/programma">Вся программа</a>
+            </div>
+            <ol class="slots" id="today-list"></ol>
+          </section>
+
+          <section class="mod mod--app">
+            <h2 id="m-app">Радио ВОС в телефоне</h2>
+            <p>Эфир и архив программ в приложении для Android.</p>
+            <a class="btn btn--accent" href="https://radiovos.ru/download/radiovos.apk" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>Скачать приложение</a>
+          </section>
+          <section class="mod mod--about">
+            <h2 id="m-about">15 лет в эфире</h2>
+            <p>Некоммерческая радиостанция Всероссийского общества слепых: события ВОС, прямые трансляции фестивалей, спорт с тифлокомментарием, аудиокниги и музыка.</p>
+            <a class="more" href="#/o-radio">О радио</a>
+          </section>
+          <section class="mod mod--wide">
+            <div class="mod__head">
+              <h2 id="m-shows">Передачи</h2>
+              <a class="more" href="#/peredachi">Все передачи</a>
+            </div>
+            <ul class="tiles" data-shows="8"></ul>
+          </section>
+
+          <section class="mod mod--wide">
+            <div class="mod__head">
+              <h2 id="m-news">Анонсы</h2>
+              <a class="more" href="#/anonsy">Все анонсы</a>
+            </div>
+            <ul class="cards" data-news="3"></ul>
+          </section>
+
+
+        </div>
+      </section>
+
+      <!-- Программа -->
+      <section class="view" data-view="programma" aria-labelledby="v-prog" hidden>
+        <div class="view__head">
+          <h1 id="v-prog" tabindex="-1">Программа передач</h1>
+          <p class="view__sub" id="prog-date"></p>
+        </div>
+        <div class="mod">
+          <ol class="slots slots--full" id="full-list"></ol>
+        </div>
+      </section>
+
+      <!-- Передачи -->
+      <section class="view" data-view="peredachi" aria-labelledby="v-shows" hidden>
+        <div class="view__head">
+          <h1 id="v-shows" tabindex="-1">Передачи</h1>
+        </div>
+        <ul class="tiles tiles--full" data-shows="all"></ul>
+      </section>
+
+      <!-- Анонсы -->
+      <section class="view" data-view="anonsy" aria-labelledby="v-news" hidden>
+        <div class="view__head">
+          <h1 id="v-news" tabindex="-1">Анонсы</h1>
+        </div>
+        <ul class="cards cards--full" data-news="all"></ul>
+      </section>
+
+      <!-- О радио -->
+      <section class="view" data-view="o-radio" aria-labelledby="v-about" hidden>
+        <div class="view__head">
+          <h1 id="v-about" tabindex="-1">О радио</h1>
+        </div>
+        <div class="grid">
+          <section class="mod mod--wide mod--lead">
+            <h2 id="a-who">Для тех, кто умеет слушать</h2>
+            <p>«Радио ВОС» — некоммерческая интернет-радиостанция Всероссийского общества слепых. Учредители — Общероссийская общественная организация инвалидов «Всероссийское ордена Трудового Красного Знамени общество слепых» и Культурно-спортивный реабилитационный комплекс ВОС.</p>
+          </section>
+          <section class="mod">
+            <h2 id="a-1">События ВОС</h2>
+            <p>Заседания Центрального правления и Совета директоров, реабилитационные форумы, еженедельные интервью с президентом ВОС В. В. Сипкиным и вице-президентами.</p>
+          </section>
+          <section class="mod">
+            <h2 id="a-2">Прямые трансляции</h2>
+            <p>Фестивали «Дары вдохновения» и «Гармония звука», Кубок «КИСИ», «Творческая ярмарка», бизнес-марафон «12 стульев», фестиваль театров «Пространство равных возможностей».</p>
+          </section>
+          <section class="mod">
+            <h2 id="a-3">Спорт с тифлокомментарием</h2>
+            <p>Футбольные и хоккейные матчи, Парад Победы с Красной площади, тематические дни к государственным праздникам.</p>
+          </section>
+          <section class="mod">
+            <h2 id="a-team">Редакция</h2>
+            <dl class="team">
+              <dt>Марина Сухарькова</dt><dd>главный редактор</dd>
+              <dt>Виктория Самойлова</dt><dd>программный директор</dd>
+              <dt>Николай Куневич</dt><dd>заместитель главного редактора</dd>
+              <dt>Антон Агишев</dt><dd>редактор информационных программ</dd>
+            </dl>
+          </section>
+          <section class="mod">
+            <h2 id="a-legal">Сведения о СМИ</h2>
+            <p><span class="age">12+</span></p>
+            <p>Свидетельство Роскомнадзора Эл № ФС77-46389 от 31.08.2011</p>
+          </section>
+        </div>
+      </section>
+
+      <!-- Контакты -->
+      <section class="view" data-view="kontakty" aria-labelledby="v-contacts" hidden>
+        <div class="view__head">
+          <h1 id="v-contacts" tabindex="-1">Контакты</h1>
+        </div>
+        <div class="grid">
+          <section class="mod mod--call">
+            <h2 id="c-air">Прямой эфир</h2>
+            <a class="call__phone" href="tel:88001000015">8-800-100-00-15</a>
+            <p>Бесплатно по России</p>
+            <a class="call__wa" href="https://wa.me/79037072671">WhatsApp и СМС: <span class="nw">+7 903 707-26-71</span></a>
+          </section>
+          <section class="mod">
+            <h2 id="c-office">Редакция</h2>
+            <dl class="team">
+              <dt><a href="tel:84999433601">8 (499) 943-36-01</a></dt><dd>телефон редакции</dd>
+              <dt><a href="mailto:radio@radiovos.ru">radio@radiovos.ru</a></dt><dd>письма и музыкальные заявки</dd>
+              <dt><a href="mailto:novosti@radiovos.ru">novosti@radiovos.ru</a></dt><dd>информационные программы</dd>
+              <dt><a href="https://vk.com/radiovos">vk.com/radiovos</a></dt><dd>сообщество во ВКонтакте</dd>
+            </dl>
+          </section>
+          <section class="mod mod--wide">
+            <h2 id="c-addr">Как добраться</h2>
+            <address>125252, Москва, ул. Куусинена, 19а, здание КСРК ВОС</address>
+            <p>Метро «Полежаевская», МЦК «Зорге». От метро «Полежаевская» и «Сокол» — троллейбусы 43, 65, 86, автобус 48 до остановки «Центральный Дом культуры ВОС».</p>
+          </section>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="foot">
+      <p class="foot__title"><span class="age" aria-label="Возрастное ограничение 12+">12+</span> Радио ВОС — интернет-радиостанция Всероссийского общества слепых</p>
+      <dl class="foot__data">
+        <div><dt>Свидетельство о регистрации СМИ</dt><dd>Эл № ФС77-46389 от 31.08.2011, выдано Роскомнадзором</dd></div>
+        <div><dt>Учредители</dt><dd>Всероссийское ордена Трудового Красного Знамени общество слепых; Культурно-спортивный реабилитационный комплекс ВОС</dd></div>
+        <div><dt>Главный редактор</dt><dd>Сухарькова Марина Петровна</dd></div>
+        <div><dt>Редакция</dt><dd><a href="tel:84999433601">8 (499) 943-36-01</a>, <a href="mailto:radio@radiovos.ru">radio@radiovos.ru</a></dd></div>
+        <div><dt>Адрес</dt><dd>125252, Москва, ул. Куусинена, 19а, здание КСРК ВОС</dd></div>
+      </dl>
+      <p class="foot__copy">© 2011–2026 Радио ВОС, КСРК ВОС · <a href="https://vos.org.ru">Всероссийское общество слепых</a></p>
+    </footer>
+    </div>
+   </div>
+  </div>
+
+  <!-- ============ Нижний плеер ============ -->
+  <div class="bar" role="region" aria-label="Плеер">
+    <button class="play play--small" type="button" data-play>
+      <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/></svg>
+      <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1.4"/><rect x="14" y="4.5" width="4.5" height="15" rx="1.4"/></svg>
+      <span class="visually-hidden" data-play-label>Слушать эфир</span>
+    </button>
+    <div class="bar__now" aria-hidden="true">
+      <span class="bar__show" id="bar-show">Радио ВОС</span>
+      <span class="bar__title" id="bar-title">Прямой эфир</span>
+    </div>
+    <div class="bar__vol">
+      <button class="icon-btn" type="button" id="mute" aria-pressed="false" aria-label="Без звука">
+        <svg class="i-vol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+        <svg class="i-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor"/><path d="m23 9-6 6M17 9l6 6"/></svg>
+      </button>
+      <input type="range" id="volume" min="0" max="100" step="5" value="80" aria-label="Громкость" aria-valuetext="80 процентов">
+    </div>
+  </div>
+
+  <!-- ============ Режим одной кнопки ============ -->
+  <section class="simple" aria-label="Режим одной кнопки">
+    <button class="play play--huge" type="button" data-play>
+      <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/></svg>
+      <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4.5" height="15" rx="1.4"/><rect x="14" y="4.5" width="4.5" height="15" rx="1.4"/></svg>
+      <span class="visually-hidden" data-play-label>Слушать эфир</span>
+    </button>
+    <p class="simple__label" aria-hidden="true" data-simple-label>Слушать</p>
+    <div class="simple__now">
+      <p class="simple__show" id="simple-show">Радио ВОС</p>
+      <p class="simple__title" id="simple-title">Прямой эфир</p>
+    </div>
+    <button class="btn" type="button" id="simple-off">Обычный вид</button>
+  </section>
+
+  <!-- ============ Горячие клавиши ============ -->
+  <dialog class="keys-dialog" id="keys" aria-labelledby="keys-title">
+    <h2 id="keys-title">Горячие клавиши</h2>
+    <dl class="keys">
+      <dt><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd></dt><dd>Слушать эфир или пауза</dd>
+      <dt><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Громче или тише</dd>
+      <dt><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd></dt><dd>Выключить или включить звук</dd>
+      <dt><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd></dt><dd>Что сейчас в эфире</dd>
+      <dt><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>K</kbd></dt><dd>Этот список</dd>
+    </dl>
+    <form method="dialog"><button class="btn btn--accent">Закрыть</button></form>
+  </dialog>
+
+  <div class="visually-hidden" id="sr-status" role="status" aria-live="polite"></div>
+  <div class="toast" id="toast" role="alert" hidden></div>
+
+  <script src="assets/js/data.js?v=13"></script>
+  <script src="assets/js/main.js?v=13"></script>
+</body>
+</html>
