@@ -23,7 +23,7 @@
   <link rel="preload" href="assets/fonts/golos-text-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/img/og-icon.png">
-  <link rel="stylesheet" href="assets/css/main.css?v=27">
+  <link rel="stylesheet" href="assets/css/main.css?v=31">
   <script>
     try {
       var s = JSON.parse(localStorage.getItem("vos-a11y") || "{}"), r = document.documentElement;
@@ -127,7 +127,7 @@
    <div class="layout">
     <!-- ============ Слева: эфир и меню ============ -->
     <aside class="side" aria-label="Эфир и разделы">
-      <a class="logo" href="#" aria-label="Радио ВОС, в начало страницы">
+      <a class="logo" href="#/" aria-label="Радио ВОС, на главную">
         <img src="assets/img/logo.svg" alt="" width="48" height="48">
         <span class="logo__text"><b>Радио ВОС</b><small>Для тех, кто умеет слушать</small></span>
       </a>
@@ -163,13 +163,13 @@
         </fieldset>
       </section>
 
-      <nav class="menu" aria-label="Разделы главной страницы">
+      <nav class="menu" aria-label="Разделы сайта">
         <ul>
-          <li><a href="#" aria-current="page">
+          <li><a href="#/" data-route="" aria-current="page">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><path d="M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 19a10 10 0 0 1 0-14M19 5a10 10 0 0 1 0 14"/></svg>Эфир</a></li>
-          <li><a href="#programma" data-anchor>
+          <li><a href="#/programma" data-route="programma">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Программа</a></li>
-          <li><a href="#peredachi" data-anchor>
+          <li><a href="#/peredachi" data-route="peredachi">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>Передачи</a></li>
           <li><a href="#anonsy" data-anchor>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10v4h3l7 4V6L7 10H4zM18 9a4 4 0 0 1 0 6"/></svg>Анонсы</a></li>
@@ -185,6 +185,7 @@
     <div class="content">
     <main id="content" tabindex="-1">
 
+      <div class="view" data-view="">
       <div class="home">
         <div class="stack">
           <section class="mod mod--next">
@@ -202,9 +203,9 @@
 
           <section class="mod mod--app">
             <h2>Радио ВОС в телефоне</h2>
-            <p>Эфир и архив программ в приложении для Android.</p>
+            <p>Эфир и архив программ в приложении для Android, файл APK.</p>
             <a class="btn btn--dark" href="https://radiovos.ru/download/radiovos.apk" download>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>Скачать приложение <span class="btn__note">(APK)</span></a>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>Скачать приложение</a>
           </section>
         </div>
 
@@ -223,24 +224,41 @@
           </section>
         </div>
 
-        <section class="mod mod--today" id="programma" tabindex="-1">
+        <section class="mod mod--today" id="segodnya" tabindex="-1">
           <div class="mod__head">
             <h2>Сегодня в эфире</h2>
             <p class="mod__meta" id="today-date"></p>
           </div>
           <ol class="slots" id="today-list"></ol>
+          <a class="more" href="#/programma">Вся программа</a>
         </section>
 
-        <section class="mod mod--wide" id="peredachi" tabindex="-1">
-          <h2>Передачи</h2>
-          <ul class="tiles" id="tiles"></ul>
-        </section>
 
         <section class="mod mod--wide" id="anonsy" tabindex="-1">
           <h2>Анонсы</h2>
           <ul class="cards" id="cards"></ul>
         </section>
       </div>
+      </div>
+
+      <!-- Программа передач — отдельный раздел -->
+      <section class="view" data-view="programma" aria-labelledby="v-prog" hidden>
+        <div class="view__head">
+          <h2 id="v-prog" tabindex="-1">Программа передач</h2>
+          <p class="mod__meta" id="prog-date"></p>
+        </div>
+        <div class="mod">
+          <ol class="slots slots--full" id="full-list"></ol>
+        </div>
+      </section>
+
+      <!-- Передачи — отдельный раздел -->
+      <section class="view" data-view="peredachi" aria-labelledby="v-shows" hidden>
+        <div class="view__head">
+          <h2 id="v-shows" tabindex="-1">Передачи</h2>
+        </div>
+        <ul class="tiles tiles--full" id="tiles"></ul>
+      </section>
     </main>
 
     <footer class="foot" id="kontakty" tabindex="-1">
@@ -335,7 +353,7 @@
   <div class="visually-hidden" id="sr-status" role="status" aria-live="polite"></div>
   <div class="toast" id="toast" role="alert" hidden></div>
 
-  <script src="assets/js/data.js?v=27"></script>
-  <script src="assets/js/main.js?v=27"></script>
+  <script src="assets/js/data.js?v=31"></script>
+  <script src="assets/js/main.js?v=31"></script>
 </body>
 </html>

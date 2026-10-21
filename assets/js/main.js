@@ -127,8 +127,8 @@
     var h = Math.floor(min / 60), m = min % 60;
     return "через " + h + " " + plural(h, "час", "часа", "часов") + (m ? " " + m + " мин" : "");
   }
-  function slotNode(it, isNow) {
-    var li = el("li", "slot" + (isNow ? " is-now" : ""));
+  function slotNode(it, isNow, isPast) {
+    var li = el("li", "slot" + (isNow ? " is-now" : "") + (isPast ? " is-past" : ""));
     if (isNow) li.setAttribute("aria-current", "true");
     var top = el("div", "slot__top");
     var t = el("time", "pill", it.time);
@@ -181,7 +181,12 @@
     $("today-date").textContent = mskDay.format(new Date()) + " · МСК";
     var today = $("today-list");
     today.innerHTML = "";
-    schedule.slice(idx, idx + 5).forEach(function (it, i) { today.appendChild(slotNode(it, i === 0)); });
+    schedule.slice(idx, idx + 4).forEach(function (it, i) { today.appendChild(slotNode(it, i === 0)); });
+
+    var full = $("full-list");
+    full.innerHTML = "";
+    schedule.forEach(function (it, i) { full.appendChild(slotNode(it, i === idx, i < idx)); });
+    $("prog-date").textContent = $("today-date").textContent;
 
     var big = $("big-list");
     big.innerHTML = "";
@@ -202,7 +207,7 @@
   function renderShows() {
     var list = $("tiles");
     list.innerHTML = "";
-    (window.VOS_SHOWS || []).slice(0, 8).forEach(function (s) {
+    (window.VOS_SHOWS || []).forEach(function (s) {
       var li = el("li");
       if (s[0].length > 15) li.className = "is-long";
       var tile = el("article", "tile");
@@ -213,6 +218,7 @@
       }
       tile.appendChild(brailleArt(s[0]));
       tile.appendChild(el("h3", null, s[0]));
+      if (s[1]) tile.appendChild(el("p", "tile__desc", s[1]));
       var times = airTimes(s[0]);
       if (times.length) tile.appendChild(el("p", "tile__when", "Сегодня в " + times.join(", ")));
       li.appendChild(tile);
@@ -243,6 +249,13 @@
   }
 
   /* ---------- Меню: переходы по разделам главной ---------- */
+  /* Разделы: «Программа» и «Передачи» открываются справа, эфир не прерывается.
+     Остальные пункты меню ведут к модулям главной. */
+  var TITLES = {
+    "": "Радио ВОС — интернет-радио Всероссийского общества слепых",
+    "programma": "Программа передач — Радио ВОС",
+    "peredachi": "Передачи — Радио ВОС"
+  };
   var menuLinks = $$(".menu a");
   function markMenu(link) {
     menuLinks.forEach(function (a) {
@@ -250,14 +263,45 @@
       else a.removeAttribute("aria-current");
     });
   }
-  menuLinks.forEach(function (a) {
-    a.addEventListener("click", function () {
-      markMenu(a);
-      if (!a.hasAttribute("data-anchor")) return;
-      var target = document.querySelector(a.getAttribute("href"));
-      if (target) setTimeout(function () { target.focus({ preventScroll: true }); }, 0);
-    });
-  });
+  function showView(name) {
+    $$(".view").forEach(function (v) { v.hidden = v.dataset.view !== name; });
+    document.title = TITLES[name];
+  }
+  function route(userAction) {
+    var hash = location.hash;
+    var name = hash.indexOf("#/") === 0 ? hash.slice(2).split("/")[0] : "";
+    if (!(name in TITLES)) name = "";
+    var anchor = hash.indexOf("#/") !== 0 && hash.length > 1 ? document.querySelector(hash) : null;
+    // Ссылки пропуска и прочие якоря вне главной («К плееру», «К содержанию») раздел не меняют
+    if (anchor && !anchor.closest('.view[data-view=""], .foot')) return;
+    showView(name);
+    var link = menuLinks.filter(function (a) {
+      return anchor ? a.getAttribute("href") === hash : a.getAttribute("data-route") === name;
+    })[0];
+    if (link || !anchor) markMenu(link || menuLinks[0]);
+    if (!userAction) {
+      if (name === "programma") {
+        var cur = $("full-list").querySelector(".is-now");
+        if (cur) setTimeout(function () { cur.scrollIntoView({ block: "center" }); }, 0);
+      }
+      return;
+    }
+    if (anchor) {
+      anchor.scrollIntoView();
+      anchor.focus({ preventScroll: true });
+    } else if (name) {
+      var h = document.querySelector('.view[data-view="' + name + '"] h2');
+      $("content").scrollIntoView();
+      h.focus({ preventScroll: true });
+      if (name === "programma") {
+        var now = $("full-list").querySelector(".is-now");
+        if (now) now.scrollIntoView({ block: "center" });
+      }
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }
+  window.addEventListener("hashchange", function () { route(true); });
 
   /* =========================================================
      Плеер
@@ -559,5 +603,6 @@
   syncBars();
   renderNews();
   renderNow();
+  route(false);
   setInterval(renderNow, 30000);
 })();
